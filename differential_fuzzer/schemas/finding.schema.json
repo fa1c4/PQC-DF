@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pq-cdf.local/differential_fuzzer/finding.schema.json",
+  "title": "PQ-CDF Finding",
+  "type": "object",
+  "required": [
+    "finding_id",
+    "job_id",
+    "pair_id",
+    "family",
+    "parameter_set",
+    "primitive_type",
+    "mismatch_type",
+    "input_file",
+    "left_project_id",
+    "right_project_id",
+    "oracle_mode",
+    "details"
+  ],
+  "properties": {
+    "finding_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "job_id": {
+      "type": "string",
+      "pattern": "^job_[a-z0-9_]+$"
+    },
+    "pair_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parameter_set": {
+      "type": "string",
+      "minLength": 1
+    },
+    "primitive_type": {
+      "enum": [
+        "kem",
+        "sig"
+      ]
+    },
+    "oracle_mode": {
+      "type": "string",
+      "minLength": 1
+    },
+    "mismatch_type": {
+      "enum": [
+        "return_code_mismatch",
+        "shared_secret_mismatch",
+        "verify_result_mismatch",
+        "cross_verify_failure",
+        "unexpected_acceptance",
+        "unexpected_rejection",
+        "abi_length_mismatch",
+        "interop_policy_violation",
+        "sanitizer_crash"
+      ]
+    },
+    "input_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "left_project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "right_project_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "details": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

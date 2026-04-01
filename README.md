@@ -1,14 +1,67 @@
 # PQ-CDF
-Post-Quantum Crypto Differential Fuzzing (PQ-CDF) Framework based on standard design document semantics extraction.
 
-## Introduction
+PQ-CDF is a framework for post-quantum crypto differential fuzzing built around three explicit layers:
 
-PQ-CDF is a research-oriented framework for differential fuzzing of post-quantum cryptographic implementations. Its goal is to help researchers and engineers discover inconsistencies, edge-case failures, and potential vulnerabilities by automatically generating comparable test inputs and checking whether multiple implementations, versions, or semantic interpretations produce divergent behaviors.
+1. Operation-level mapping
+2. Flow-level pairing
+3. Self-sufficient job generation
 
-Unlike traditional fuzzing that focuses primarily on crashes or memory-safety bugs, differential fuzzing is especially valuable for cryptography because many serious flaws appear as logic mismatches, invalid-output handling differences, non-conforming error behavior, or deviations from a specification. In the post-quantum setting, these issues are even more important: algorithms are newer, implementations are evolving quickly, and standards are still being interpreted and integrated across different libraries and systems.
+The repository is structured to keep source-of-truth contracts separate from runtime artifacts, use stock libFuzzer, and generate one fuzzer binary per flow pair.
 
-PQ-CDF is built around the idea of extracting semantic constraints and behavioral expectations from standards and design documents, then turning that knowledge into structured fuzzing guidance. This allows the framework to go beyond random mutation and produce higher-value test cases that are more likely to expose specification ambiguities, interoperability problems, and implementation-level inconsistencies in post-quantum cryptographic software.
+## Status
 
-In short, PQ-CDF aims to bridge standards understanding and automated testing, providing a practical foundation for validating the correctness, robustness, and consistency of post-quantum cryptographic implementations.
+This repository now includes the architecture scaffold plus the first working pipeline for:
 
+- manual operation mapping normalization
+- flow-level bundle pairing
+- self-sufficient fuzzer job generation
+- runtime-generated harness and config emission under `workspace/tmp/<job_id>/`
+
+Adapter implementations, semantic oracle execution, native compilation, fuzz runs, and replay/finding recording are scaffolded but not implemented yet.
+
+## Layout
+
+```text
+/design_implementation_mapper
+/pairing_differential_targets
+/differential_fuzzer
+/eval
+/projects
+/workspace
+```
+
+## Quickstart
+
+Generate normalized mappings:
+
+```bash
+python3 design_implementation_mapper/mapper.py
+```
+
+Generate flow pairs:
+
+```bash
+python3 pairing_differential_targets/pairing.py
+```
+
+Generate job records and runtime harness/config artifacts:
+
+```bash
+python3 differential_fuzzer/diff_fuzzer.py
+```
+
+## Current scope
+
+- Projects: `liboqs`, `PQClean`
+- Families: `ML-KEM`, `ML-DSA`
+- Primitive types: `kem`, `sig`
+- Pairing policy: exact complete bundles only
+- Runtime artifacts: isolated by `job_id`
+
+## Notes
+
+- `projects/` is reserved for upstream source trees only.
+- `workspace/` is reserved for runtime outputs only.
+- Checked-in templates live under `differential_fuzzer/templates/`.
+- Generated harnesses never live in source-of-truth directories.
 

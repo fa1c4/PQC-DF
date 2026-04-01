@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pq-cdf.local/differential_fuzzer/generated_config.schema.json",
+  "title": "PQ-CDF Generated Harness Config",
+  "type": "object",
+  "required": [
+    "job_id",
+    "pair_id",
+    "family",
+    "parameter_set",
+    "primitive_type",
+    "oracle_mode",
+    "abi",
+    "capability_flags",
+    "determinism_policy",
+    "interop_policy",
+    "enabled_subtests",
+    "mismatch_labels",
+    "paths",
+    "replay_policy",
+    "sanity_checks"
+  ],
+  "properties": {
+    "job_id": {
+      "type": "string",
+      "pattern": "^job_[a-z0-9_]+$"
+    },
+    "pair_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "parameter_set": {
+      "type": "string",
+      "minLength": 1
+    },
+    "primitive_type": {
+      "enum": [
+        "kem",
+        "sig"
+      ]
+    },
+    "oracle_mode": {
+      "type": "string",
+      "minLength": 1
+    },
+    "abi": {
+      "type": "object",
+      "required": [
+        "left",
+        "right"
+      ]
+    },
+    "capability_flags": {
+      "type": "object",
+      "required": [
+        "left",
+        "right"
+      ]
+    },
+    "determinism_policy": {
+      "type": "object",
+      "required": [
+        "prefer_seeded_keygen",
+        "prefer_seeded_encaps",
+        "prefer_seeded_sign",
+        "compare_raw_signature_bytes"
+      ]
+    },
+    "interop_policy": {
+      "type": "object"
+    },
+    "enabled_subtests": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "mismatch_labels": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "paths": {
+      "type": "object",
+      "required": [
+        "generated_harness",
+        "result_dir",
+        "crash_dir",
+        "run_dir"
+      ]
+    },
+    "replay_policy": {
+      "type": "object"
+    },
+    "sanity_checks": {
+      "type": "object",
+      "required": [
+        "required_operations",
+        "cross_exchange_allowed",
+        "raw_signature_byte_comparison_allowed"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

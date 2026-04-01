@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pq-cdf.local/differential_fuzzer/fuzzer_job.schema.json",
+  "title": "PQ-CDF Fuzzer Job",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/job"
+  },
+  "$defs": {
+    "bundle": {
+      "type": "object",
+      "required": [
+        "project_id",
+        "project_name",
+        "implementation_id",
+        "api_variant",
+        "backend_variant",
+        "build",
+        "abi",
+        "capabilities",
+        "operations"
+      ],
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "project_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "api_variant": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backend_variant": {
+          "type": "string",
+          "minLength": 1
+        },
+        "build": {
+          "type": "object"
+        },
+        "abi": {
+          "type": "object"
+        },
+        "capabilities": {
+          "type": "object"
+        },
+        "operations": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": true
+    },
+    "job": {
+      "type": "object",
+      "required": [
+        "job_id",
+        "pair_id",
+        "family",
+        "family_slug",
+        "parameter_set",
+        "primitive_type",
+        "harness_template",
+        "generated_harness",
+        "generated_config",
+        "build_dir",
+        "run_dir",
+        "result_dir",
+        "crash_dir",
+        "oracle_mode",
+        "enabled_subtests",
+        "determinism_policy",
+        "interop_policy",
+        "mismatch_labels",
+        "sanitizer_build_flags",
+        "resource_defaults",
+        "replay_policy",
+        "crash_artifact_policy",
+        "left",
+        "right",
+        "status"
+      ],
+      "properties": {
+        "job_id": {
+          "type": "string",
+          "pattern": "^job_[a-z0-9_]+$"
+        },
+        "pair_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "family": {
+          "type": "string",
+          "minLength": 1
+        },
+        "family_slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+$"
+        },
+        "parameter_set": {
+          "type": "string",
+          "minLength": 1
+        },
+        "primitive_type": {
+          "enum": [
+            "kem",
+            "sig"
+          ]
+        },
+        "harness_template": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generated_harness": {
+          "type": "string",
+          "pattern": "^workspace/tmp/job_[a-z0-9_]+/generated_harness\\.cpp$"
+        },
+        "generated_config": {
+          "type": "string",
+          "pattern": "^workspace/tmp/job_[a-z0-9_]+/generated_config\\.json$"
+        },
+        "build_dir": {
+          "type": "string",
+          "pattern": "^workspace/build/job_[a-z0-9_]+$"
+        },
+        "run_dir": {
+          "type": "string",
+          "pattern": "^workspace/runs/job_[a-z0-9_]+$"
+        },
+        "result_dir": {
+          "type": "string",
+          "pattern": "^workspace/results/job_[a-z0-9_]+$"
+        },
+        "crash_dir": {
+          "type": "string",
+          "pattern": "^workspace/crashes/job_[a-z0-9_]+$"
+        },
+        "oracle_mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "enabled_subtests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "determinism_policy": {
+          "type": "object",
+          "required": [
+            "prefer_seeded_keygen",
+            "prefer_seeded_encaps",
+            "prefer_seeded_sign",
+            "compare_raw_signature_bytes"
+          ]
+        },
+        "interop_policy": {
+          "type": "object"
+        },
+        "mismatch_labels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "sanitizer_build_flags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "resource_defaults": {
+          "type": "object",
+          "required": [
+            "timeout_seconds",
+            "rss_mb"
+          ]
+        },
+        "replay_policy": {
+          "type": "object"
+        },
+        "crash_artifact_policy": {
+          "type": "object"
+        },
+        "left": {
+          "$ref": "#/$defs/bundle"
+        },
+        "right": {
+          "$ref": "#/$defs/bundle"
+        },
+        "status": {
+          "enum": [
+            "pending"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

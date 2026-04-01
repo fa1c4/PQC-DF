@@ -1,0 +1,285 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pq-cdf.local/design_implementation_mapper/mapping.schema.json",
+  "title": "PQ-CDF Mapping",
+  "type": "object",
+  "patternProperties": {
+    "^[A-Za-z0-9-]+/[a-z0-9_]+$": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z0-9_]+$": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/descriptor"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "descriptor": {
+      "type": "object",
+      "required": [
+        "project_id",
+        "project_name",
+        "implementation_id",
+        "source_file",
+        "function",
+        "primitive_type",
+        "api_variant",
+        "backend_variant",
+        "status",
+        "build",
+        "abi",
+        "capabilities",
+        "provenance_hint"
+      ],
+      "properties": {
+        "project_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "project_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$"
+        },
+        "source_file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "function": {
+          "type": "string",
+          "minLength": 1
+        },
+        "primitive_type": {
+          "enum": [
+            "kem",
+            "sig"
+          ]
+        },
+        "api_variant": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backend_variant": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "enabled",
+            "todo",
+            "manual-review"
+          ]
+        },
+        "build": {
+          "$ref": "#/$defs/build"
+        },
+        "abi": {
+          "$ref": "#/$defs/abi"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/capabilities"
+        },
+        "provenance_hint": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "primitive_type": {
+                "const": "kem"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "abi": {
+                "properties": {
+                  "ct_len": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "ss_len": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "sig_max_len": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "primitive_type": {
+                "const": "sig"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "abi": {
+                "properties": {
+                  "ct_len": {
+                    "type": "null"
+                  },
+                  "ss_len": {
+                    "type": "null"
+                  },
+                  "sig_max_len": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "build": {
+      "type": "object",
+      "required": [
+        "build_mode",
+        "implementation_dir",
+        "declaration_file",
+        "implementation_files",
+        "include_dirs",
+        "common_deps",
+        "defines"
+      ],
+      "properties": {
+        "build_mode": {
+          "enum": [
+            "library",
+            "source"
+          ]
+        },
+        "library_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation_dir": {
+          "type": "string",
+          "minLength": 1
+        },
+        "declaration_file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "include_dirs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "common_deps": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "defines": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "abi": {
+      "type": "object",
+      "required": [
+        "pk_len",
+        "sk_len",
+        "ct_len",
+        "ss_len",
+        "sig_max_len"
+      ],
+      "properties": {
+        "pk_len": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sk_len": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ct_len": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "ss_len": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "sig_max_len": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "object",
+      "required": [
+        "supports_keygen_derand",
+        "supports_encaps_derand",
+        "supports_sign_derand",
+        "wire_format_class",
+        "interop_class"
+      ],
+      "properties": {
+        "supports_keygen_derand": {
+          "type": "boolean"
+        },
+        "supports_encaps_derand": {
+          "type": "boolean"
+        },
+        "supports_sign_derand": {
+          "type": "boolean"
+        },
+        "wire_format_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interop_class": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

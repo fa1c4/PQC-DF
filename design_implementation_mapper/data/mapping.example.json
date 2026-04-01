@@ -1,0 +1,130 @@
+{
+  "ML-KEM-768/keygen": {
+    "liboqs": [
+      {
+        "project_id": "liboqs",
+        "project_name": "liboqs",
+        "implementation_id": "liboqs_mlkem768_wrapper_generic",
+        "source_file": "src/kem/ml_kem/kem_ml_kem_768.c",
+        "function": "OQS_KEM_ml_kem_768_keypair",
+        "primitive_type": "kem",
+        "api_variant": "wrapper",
+        "backend_variant": "generic",
+        "status": "enabled",
+        "build": {
+          "build_mode": "library",
+          "library_name": "oqs",
+          "implementation_dir": "src/kem/ml_kem",
+          "declaration_file": "src/kem/kem.h",
+          "implementation_files": [],
+          "include_dirs": [
+            "src",
+            "src/kem"
+          ],
+          "common_deps": [],
+          "defines": []
+        },
+        "abi": {
+          "pk_len": 1184,
+          "sk_len": 2400,
+          "ct_len": 1088,
+          "ss_len": 32,
+          "sig_max_len": null
+        },
+        "capabilities": {
+          "supports_keygen_derand": true,
+          "supports_encaps_derand": true,
+          "supports_sign_derand": false,
+          "wire_format_class": "mlkem-standard",
+          "interop_class": "declared-compatible"
+        },
+        "provenance_hint": "manual"
+      }
+    ],
+    "pqclean": [
+      {
+        "project_id": "pqclean",
+        "project_name": "PQClean",
+        "implementation_id": "pqclean_mlkem768_clean",
+        "source_file": "crypto_kem/ml-kem-768/clean/api.h",
+        "function": "PQCLEAN_MLKEM768_CLEAN_crypto_kem_keypair",
+        "primitive_type": "kem",
+        "api_variant": "direct",
+        "backend_variant": "clean",
+        "status": "enabled",
+        "build": {
+          "build_mode": "source",
+          "implementation_dir": "crypto_kem/ml-kem-768/clean",
+          "declaration_file": "crypto_kem/ml-kem-768/clean/api.h",
+          "implementation_files": [],
+          "include_dirs": [
+            "crypto_kem/ml-kem-768/clean",
+            "common"
+          ],
+          "common_deps": [
+            "randombytes"
+          ],
+          "defines": []
+        },
+        "abi": {
+          "pk_len": 1184,
+          "sk_len": 2400,
+          "ct_len": 1088,
+          "ss_len": 32,
+          "sig_max_len": null
+        },
+        "capabilities": {
+          "supports_keygen_derand": false,
+          "supports_encaps_derand": false,
+          "supports_sign_derand": false,
+          "wire_format_class": "mlkem-standard",
+          "interop_class": "declared-compatible"
+        },
+        "provenance_hint": "manual"
+      }
+    ]
+  },
+  "ML-DSA-65/sign": {
+    "liboqs": [
+      {
+        "project_id": "liboqs",
+        "project_name": "liboqs",
+        "implementation_id": "liboqs_mldsa65_wrapper_generic",
+        "source_file": "src/sig/ml_dsa/sig_ml_dsa_65.c",
+        "function": "OQS_SIG_ml_dsa_65_sign",
+        "primitive_type": "sig",
+        "api_variant": "wrapper",
+        "backend_variant": "generic",
+        "status": "enabled",
+        "build": {
+          "build_mode": "library",
+          "library_name": "oqs",
+          "implementation_dir": "src/sig/ml_dsa",
+          "declaration_file": "src/sig/sig.h",
+          "implementation_files": [],
+          "include_dirs": [
+            "src",
+            "src/sig"
+          ],
+          "common_deps": [],
+          "defines": []
+        },
+        "abi": {
+          "pk_len": 1952,
+          "sk_len": 4032,
+          "ct_len": null,
+          "ss_len": null,
+          "sig_max_len": 3309
+        },
+        "capabilities": {
+          "supports_keygen_derand": false,
+          "supports_encaps_derand": false,
+          "supports_sign_derand": true,
+          "wire_format_class": "mldsa-standard",
+          "interop_class": "declared-compatible"
+        },
+        "provenance_hint": "manual"
+      }
+    ]
+  }
+}

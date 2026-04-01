@@ -1,0 +1,85 @@
+{
+  "enabled_projects": [
+    "liboqs",
+    "pqclean"
+  ],
+  "allowed_project_pairs": [
+    [
+      "liboqs",
+      "pqclean"
+    ]
+  ],
+  "allowed_primitive_types": [
+    "kem",
+    "sig"
+  ],
+  "allowed_status": [
+    "enabled"
+  ],
+  "required_operations": {
+    "kem": [
+      "keygen",
+      "encaps",
+      "decaps"
+    ],
+    "sig": [
+      "keygen",
+      "sign",
+      "verify"
+    ]
+  },
+  "allowed_implementations": {
+    "liboqs": [
+      "liboqs_mlkem768_wrapper_generic",
+      "liboqs_mldsa65_wrapper_generic"
+    ],
+    "pqclean": [
+      "pqclean_mlkem768_clean",
+      "pqclean_mldsa65_clean"
+    ]
+  },
+  "allowed_backend_variants": {
+    "liboqs": [
+      "generic",
+      "clean"
+    ],
+    "pqclean": [
+      "clean"
+    ]
+  },
+  "variant_priority": {
+    "liboqs": [
+      "generic",
+      "clean"
+    ],
+    "pqclean": [
+      "clean"
+    ]
+  },
+  "interop_requirements": {
+    "kem": {
+      "public_key_exchange": [
+        "declared-compatible",
+        "same-project-only",
+        "no-cross-exchange"
+      ],
+      "ciphertext_exchange": [
+        "declared-compatible",
+        "same-project-only",
+        "no-cross-exchange"
+      ]
+    },
+    "sig": {
+      "public_key_exchange": [
+        "declared-compatible",
+        "same-project-only",
+        "no-cross-exchange"
+      ],
+      "signature_exchange": [
+        "declared-compatible",
+        "same-project-only",
+        "no-cross-exchange"
+      ]
+    }
+  }
+}

@@ -1,0 +1,222 @@
+[
+  {
+    "pair_id": "mldsa65_liboqs_liboqs_mldsa65_wrapper_generic_vs_pqclean_pqclean_mldsa65_clean",
+    "family": "ML-DSA",
+    "family_slug": "mldsa",
+    "parameter_set": "65",
+    "primitive_type": "sig",
+    "left": {
+      "project_id": "liboqs",
+      "project_name": "liboqs",
+      "implementation_id": "liboqs_mldsa65_wrapper_generic",
+      "api_variant": "wrapper",
+      "backend_variant": "generic",
+      "build": {
+        "build_mode": "library",
+        "implementation_dir": "src/sig/ml_dsa",
+        "declaration_file": "src/sig/sig.h",
+        "implementation_files": [],
+        "include_dirs": [
+          "src",
+          "src/sig"
+        ],
+        "common_deps": [],
+        "defines": [],
+        "library_name": "oqs"
+      },
+      "abi": {
+        "pk_len": 1952,
+        "sk_len": 4032,
+        "ct_len": null,
+        "ss_len": null,
+        "sig_max_len": 3309
+      },
+      "capabilities": {
+        "supports_keygen_derand": false,
+        "supports_encaps_derand": false,
+        "supports_sign_derand": true,
+        "wire_format_class": "mldsa-standard",
+        "interop_class": "declared-compatible"
+      },
+      "operations": {
+        "keygen": {
+          "source_file": "src/sig/ml_dsa/sig_ml_dsa_65.c",
+          "function": "OQS_SIG_ml_dsa_65_keypair"
+        },
+        "sign": {
+          "source_file": "src/sig/ml_dsa/sig_ml_dsa_65.c",
+          "function": "OQS_SIG_ml_dsa_65_sign"
+        },
+        "verify": {
+          "source_file": "src/sig/ml_dsa/sig_ml_dsa_65.c",
+          "function": "OQS_SIG_ml_dsa_65_verify"
+        }
+      }
+    },
+    "right": {
+      "project_id": "pqclean",
+      "project_name": "PQClean",
+      "implementation_id": "pqclean_mldsa65_clean",
+      "api_variant": "direct",
+      "backend_variant": "clean",
+      "build": {
+        "build_mode": "source",
+        "implementation_dir": "crypto_sign/ml-dsa-65/clean",
+        "declaration_file": "crypto_sign/ml-dsa-65/clean/api.h",
+        "implementation_files": [],
+        "include_dirs": [
+          "common",
+          "crypto_sign/ml-dsa-65/clean"
+        ],
+        "common_deps": [
+          "randombytes"
+        ],
+        "defines": []
+      },
+      "abi": {
+        "pk_len": 1952,
+        "sk_len": 4032,
+        "ct_len": null,
+        "ss_len": null,
+        "sig_max_len": 3309
+      },
+      "capabilities": {
+        "supports_keygen_derand": false,
+        "supports_encaps_derand": false,
+        "supports_sign_derand": false,
+        "wire_format_class": "mldsa-standard",
+        "interop_class": "declared-compatible"
+      },
+      "operations": {
+        "keygen": {
+          "source_file": "crypto_sign/ml-dsa-65/clean/api.h",
+          "function": "PQCLEAN_MLDSA65_CLEAN_crypto_sign_keypair"
+        },
+        "sign": {
+          "source_file": "crypto_sign/ml-dsa-65/clean/api.h",
+          "function": "PQCLEAN_MLDSA65_CLEAN_crypto_sign_signature"
+        },
+        "verify": {
+          "source_file": "crypto_sign/ml-dsa-65/clean/api.h",
+          "function": "PQCLEAN_MLDSA65_CLEAN_crypto_sign_verify"
+        }
+      }
+    },
+    "interop_policy": {
+      "public_key_exchange": "declared-compatible",
+      "signature_exchange": "declared-compatible"
+    },
+    "provenance_relation": "unknown",
+    "status": "enabled"
+  },
+  {
+    "pair_id": "mlkem768_liboqs_liboqs_mlkem768_wrapper_generic_vs_pqclean_pqclean_mlkem768_clean",
+    "family": "ML-KEM",
+    "family_slug": "mlkem",
+    "parameter_set": "768",
+    "primitive_type": "kem",
+    "left": {
+      "project_id": "liboqs",
+      "project_name": "liboqs",
+      "implementation_id": "liboqs_mlkem768_wrapper_generic",
+      "api_variant": "wrapper",
+      "backend_variant": "generic",
+      "build": {
+        "build_mode": "library",
+        "implementation_dir": "src/kem/ml_kem",
+        "declaration_file": "src/kem/kem.h",
+        "implementation_files": [],
+        "include_dirs": [
+          "src",
+          "src/kem"
+        ],
+        "common_deps": [],
+        "defines": [],
+        "library_name": "oqs"
+      },
+      "abi": {
+        "pk_len": 1184,
+        "sk_len": 2400,
+        "ct_len": 1088,
+        "ss_len": 32,
+        "sig_max_len": null
+      },
+      "capabilities": {
+        "supports_keygen_derand": true,
+        "supports_encaps_derand": true,
+        "supports_sign_derand": false,
+        "wire_format_class": "mlkem-standard",
+        "interop_class": "declared-compatible"
+      },
+      "operations": {
+        "decaps": {
+          "source_file": "src/kem/ml_kem/kem_ml_kem_768.c",
+          "function": "OQS_KEM_ml_kem_768_decaps"
+        },
+        "encaps": {
+          "source_file": "src/kem/ml_kem/kem_ml_kem_768.c",
+          "function": "OQS_KEM_ml_kem_768_encaps"
+        },
+        "keygen": {
+          "source_file": "src/kem/ml_kem/kem_ml_kem_768.c",
+          "function": "OQS_KEM_ml_kem_768_keypair"
+        }
+      }
+    },
+    "right": {
+      "project_id": "pqclean",
+      "project_name": "PQClean",
+      "implementation_id": "pqclean_mlkem768_clean",
+      "api_variant": "direct",
+      "backend_variant": "clean",
+      "build": {
+        "build_mode": "source",
+        "implementation_dir": "crypto_kem/ml-kem-768/clean",
+        "declaration_file": "crypto_kem/ml-kem-768/clean/api.h",
+        "implementation_files": [],
+        "include_dirs": [
+          "common",
+          "crypto_kem/ml-kem-768/clean"
+        ],
+        "common_deps": [
+          "randombytes"
+        ],
+        "defines": []
+      },
+      "abi": {
+        "pk_len": 1184,
+        "sk_len": 2400,
+        "ct_len": 1088,
+        "ss_len": 32,
+        "sig_max_len": null
+      },
+      "capabilities": {
+        "supports_keygen_derand": false,
+        "supports_encaps_derand": false,
+        "supports_sign_derand": false,
+        "wire_format_class": "mlkem-standard",
+        "interop_class": "declared-compatible"
+      },
+      "operations": {
+        "decaps": {
+          "source_file": "crypto_kem/ml-kem-768/clean/api.h",
+          "function": "PQCLEAN_MLKEM768_CLEAN_crypto_kem_dec"
+        },
+        "encaps": {
+          "source_file": "crypto_kem/ml-kem-768/clean/api.h",
+          "function": "PQCLEAN_MLKEM768_CLEAN_crypto_kem_enc"
+        },
+        "keygen": {
+          "source_file": "crypto_kem/ml-kem-768/clean/api.h",
+          "function": "PQCLEAN_MLKEM768_CLEAN_crypto_kem_keypair"
+        }
+      }
+    },
+    "interop_policy": {
+      "public_key_exchange": "declared-compatible",
+      "ciphertext_exchange": "declared-compatible"
+    },
+    "provenance_relation": "unknown",
+    "status": "enabled"
+  }
+]
