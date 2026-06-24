@@ -1,3 +1,7 @@
+# ignore fuzzing files & dirs
+
+
+
 __pycache__/
 *.pyc
 *.pyo
