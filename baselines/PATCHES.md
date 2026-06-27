@@ -14,4 +14,6 @@
 
 ## cryptoTesting
 
-No baseline source patches are currently applied.
+- Changed: `baselines/cryptoTesting/Makefile`
+- Reason: make liboqs checkout/configure/build recipes fail-fast so a failed `git checkout` cannot continue into CMake/Ninja on the wrong revision.
+- Behavior preserved: upstream fuzzing logic unchanged.

@@ -35,12 +35,14 @@ ches_deps:
 ches_liboqs: common ches_deps
 	git clone https://github.com/open-quantum-safe/liboqs.git ches_liboqs
 	mkdir -p ches_liboqs/build
-	cd ches_liboqs/build; git checkout 0.14.0; cmake -GNinja -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_ASM_COMPILER=gcc-8 .. ; ninja
+	cd ches_liboqs && git checkout 0.14.0
+	cd ches_liboqs/build && cmake -GNinja -DCMAKE_C_COMPILER=gcc-8 -DCMAKE_ASM_COMPILER=gcc-8 .. && ninja
 
 ches_liboqs_afl: common ches_deps
 	git clone https://github.com/open-quantum-safe/liboqs.git ches_liboqs_afl
 	mkdir -p ches_liboqs_afl/build
-	cd ches_liboqs_afl/build; git checkout 0.14.0; cmake -GNinja -DCMAKE_C_COMPILER=$(AFLCC) -DCMAKE_ASM_COMPILER=$(AFLCC) .. ; ninja
+	cd ches_liboqs_afl && git checkout 0.14.0
+	cd ches_liboqs_afl/build && cmake -GNinja -DCMAKE_C_COMPILER=$(AFLCC) -DCMAKE_ASM_COMPILER=$(AFLCC) .. && ninja
 
 cur_deps:
 	sudo apt-get install -y --no-install-recommends python3-pip astyle gcc ninja-build python3-pytest python3-pytest-xdist doxygen graphviz python3-yaml valgrind
@@ -51,12 +53,14 @@ cur_deps:
 cur_liboqs: common cur_deps
 	git clone https://github.com/open-quantum-safe/liboqs.git cur_liboqs
 	mkdir -p cur_liboqs/build
-	cd cur_liboqs/build; git checkout 0.8.0; cmake -GNinja .. ; ninja
+	cd cur_liboqs && git checkout 0.8.0
+	cd cur_liboqs/build && cmake -GNinja .. && ninja
 
 cur_liboqs_afl: common cur_deps
 	git clone https://github.com/open-quantum-safe/liboqs.git cur_liboqs_afl
 	mkdir -p cur_liboqs_afl/build
-	cd cur_liboqs_afl/build; git checkout 0.8.0; cmake -GNinja -DCMAKE_C_COMPILER=$(AFLCC) -DCMAKE_ASM_COMPILER=$(AFLCC) .. ; ninja
+	cd cur_liboqs_afl && git checkout 0.8.0
+	cd cur_liboqs_afl/build && cmake -GNinja -DCMAKE_C_COMPILER=$(AFLCC) -DCMAKE_ASM_COMPILER=$(AFLCC) .. && ninja
 
 OLDCC=gcc-7
 
@@ -97,15 +101,15 @@ mid_deps:
 
 mid_liboqs: common mid_deps
 	git clone https://github.com/open-quantum-safe/liboqs.git mid_liboqs
-	cd mid_liboqs; git checkout 0.4.0
+	cd mid_liboqs && git checkout 0.4.0
 	mkdir -p mid_liboqs/build
-	cd mid_liboqs/build; cmake -GNinja .. ; ninja
+	cd mid_liboqs/build && cmake -GNinja .. && ninja
 
 mid_liboqs_afl: common mid_deps
 	git clone https://github.com/open-quantum-safe/liboqs.git mid_liboqs_afl
-	cd mid_liboqs_afl; git checkout 0.4.0
+	cd mid_liboqs_afl && git checkout 0.4.0
 	mkdir -p mid_liboqs_afl/build
-	cd mid_liboqs_afl/build; cmake -GNinja -DCMAKE_C_COMPILER=$(AFLCC) -DCMAKE_ASM_COMPILER=$(AFLCC) .. ; ninja
+	cd mid_liboqs_afl/build && cmake -GNinja -DCMAKE_C_COMPILER=$(AFLCC) -DCMAKE_ASM_COMPILER=$(AFLCC) .. && ninja
 
 aflpp_deps:
 	sudo apt-get install -y --no-install-recommends curl python3-sympy python3-bitarray python3-cffi python3-dev gcc-7-plugin-dev g++-8

@@ -22,6 +22,7 @@ Examples:
   scripts/run_baseline.sh cryptofuzz build
   scripts/run_baseline.sh CLFuzz run
   scripts/run_baseline.sh cryptoTesting docker-build
+  scripts/run_baseline.sh cryptoTesting run --version 0.14.0
 EOF
 }
 
@@ -79,7 +80,24 @@ case "$COMMAND" in
     ;;
 
   clean)
-    rm -rf "$BUILD_DIR" "$RUN_DIR"
+    if ! rm -rf "$BUILD_DIR" "$RUN_DIR" 2>/tmp/pqcdf-run-baseline-clean.err; then
+      if [ "$BASELINE" = "cryptoTesting" ] &&
+        command -v docker >/dev/null 2>&1 &&
+        docker image inspect "$IMAGE_NAME" >/dev/null 2>&1; then
+        mkdir -p "$BUILD_DIR" "$RUN_DIR"
+        BUILD_DIR_ABS="$(realpath "$BUILD_DIR")"
+        RUN_DIR_ABS="$(realpath "$RUN_DIR")"
+        docker run --rm \
+          -v "${BUILD_DIR_ABS}:/pqcdf-build" \
+          -v "${RUN_DIR_ABS}:/pqcdf-run" \
+          "$IMAGE_NAME" \
+          bash -lc 'rm -rf /pqcdf-build/* /pqcdf-build/.[!.]* /pqcdf-build/..?* /pqcdf-run/* /pqcdf-run/.[!.]* /pqcdf-run/..?*'
+      else
+        echo "Failed to clean $BUILD_DIR and $RUN_DIR." >&2
+        cat /tmp/pqcdf-run-baseline-clean.err >&2
+        exit 1
+      fi
+    fi
     mkdir -p "$BUILD_DIR" "$RUN_DIR"
     touch "$BUILD_DIR/.gitkeep" "$RUN_DIR/.gitkeep"
     ;;
