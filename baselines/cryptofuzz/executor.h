@@ -290,6 +290,8 @@ using ExecutorBLS_G2_IsEq = ExecutorBase<bool, operation::BLS_G2_IsEq>;
 using ExecutorBLS_G2_Neg = ExecutorBase<component::G2, operation::BLS_G2_Neg>;
 using ExecutorBLS_G1_MultiExp = ExecutorBase<component::G1, operation::BLS_G1_MultiExp>;
 using ExecutorMisc = ExecutorBase<Buffer, operation::Misc>;
+using ExecutorOQSKEMSelfTest = ExecutorBase<bool, operation::OQS_KEM_SelfTest>;
+using ExecutorOQSSIGSelfTest = ExecutorBase<bool, operation::OQS_SIG_SelfTest>;
 using ExecutorSR25519_Verify = ExecutorBase<bool, operation::SR25519_Verify>;
 
 } /* namespace cryptofuzz */

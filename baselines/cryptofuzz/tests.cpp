@@ -1333,5 +1333,15 @@ void test(const operation::BignumCalc_Fp12& op, const std::optional<component::F
     (void)result;
 }
 
+void test(const operation::OQS_KEM_SelfTest& op, const std::optional<bool>& result) {
+    (void)op;
+    (void)result;
+}
+
+void test(const operation::OQS_SIG_SelfTest& op, const std::optional<bool>& result) {
+    (void)op;
+    (void)result;
+}
+
 } /* namespace tests */
 } /* namespace cryptofuzz */

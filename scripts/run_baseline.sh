@@ -23,6 +23,10 @@ Examples:
   scripts/run_baseline.sh CLFuzz run
   scripts/run_baseline.sh cryptoTesting docker-build
   scripts/run_baseline.sh cryptoTesting run --version 0.14.0
+
+docker-build options:
+  --base-image IMAGE  Override Dockerfile BASE_IMAGE when supported.
+                      Also available via PQCDF_DOCKER_BASE_IMAGE.
 EOF
 }
 
@@ -103,7 +107,34 @@ case "$COMMAND" in
     ;;
 
   docker-build)
+    DOCKER_BUILD_ARGS=()
+    if [ -n "${PQCDF_DOCKER_BASE_IMAGE:-}" ]; then
+      DOCKER_BUILD_ARGS+=(--build-arg "BASE_IMAGE=${PQCDF_DOCKER_BASE_IMAGE}")
+    fi
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --base-image)
+          if [ "$#" -lt 2 ]; then
+            echo "--base-image requires an image name" >&2
+            exit 2
+          fi
+          DOCKER_BUILD_ARGS+=(--build-arg "BASE_IMAGE=$2")
+          shift 2
+          ;;
+        --)
+          shift
+          DOCKER_BUILD_ARGS+=("$@")
+          break
+          ;;
+        *)
+          DOCKER_BUILD_ARGS+=("$1")
+          shift
+          ;;
+      esac
+    done
+
     docker build \
+      "${DOCKER_BUILD_ARGS[@]}" \
       -t "$IMAGE_NAME" \
       -f "${BASELINE_DIR}/Dockerfile" \
       "$BASELINE_DIR"

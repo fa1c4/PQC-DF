@@ -122,6 +122,8 @@ void Driver::Run(const uint8_t* data, const size_t size) const {
     static ExecutorBLS_G2_Neg executorBLS_G2_Neg(CF_OPERATION("BLS_G2_Neg"), modules, options);
     static ExecutorBLS_G1_MultiExp executorBLS_G1_MultiExp(CF_OPERATION("BLS_G1_MultiExp"), modules, options);
     static ExecutorMisc executorMisc(CF_OPERATION("Misc"), modules, options);
+    static ExecutorOQSKEMSelfTest executorOQSKEMSelfTest(CF_OPERATION("OQS_KEM_SelfTest"), modules, options);
+    static ExecutorOQSSIGSelfTest executorOQSSIGSelfTest(CF_OPERATION("OQS_SIG_SelfTest"), modules, options);
     static ExecutorSR25519_Verify executorSR25519_Verify(CF_OPERATION("SR25519_Verify"), modules, options);
 
     try {
@@ -454,6 +456,12 @@ void Driver::Run(const uint8_t* data, const size_t size) const {
                 break;
             case CF_OPERATION("Misc"):
                 executorMisc.Run(ds, payload.data(), payload.size());
+                break;
+            case CF_OPERATION("OQS_KEM_SelfTest"):
+                executorOQSKEMSelfTest.Run(ds, payload.data(), payload.size());
+                break;
+            case CF_OPERATION("OQS_SIG_SelfTest"):
+                executorOQSSIGSelfTest.Run(ds, payload.data(), payload.size());
                 break;
             case CF_OPERATION("SR25519_Verify"):
                 executorSR25519_Verify.Run(ds, payload.data(), payload.size());

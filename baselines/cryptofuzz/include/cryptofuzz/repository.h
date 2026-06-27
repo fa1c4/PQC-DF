@@ -37,7 +37,7 @@ std::string CalcOpToString(const uint64_t id);
 size_t CalcOpToNumParams(const uint64_t id);
 std::optional<size_t> DigestSize(const uint64_t id);
 
-#include "../../repository_tbl.h"
+#include "repository_tbl.h"
 
 template <typename LUT>
 inline constexpr long LUTCheck(const uint64_t id, const LUT* lut, const size_t lutSize) noexcept {

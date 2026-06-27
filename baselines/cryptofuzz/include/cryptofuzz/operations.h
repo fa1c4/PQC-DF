@@ -3665,6 +3665,93 @@ class Misc : public Operation {
         }
 };
 
+class OQS_KEM_SelfTest : public Operation {
+    public:
+        const uint64_t selector;
+        const Buffer entropy;
+        const Buffer mutation;
+
+        OQS_KEM_SelfTest(Datasource& ds, component::Modifier modifier) :
+            Operation(std::move(modifier)),
+            selector(ds.Get<uint64_t>()),
+            entropy(ds.GetData(0, 0, 4096)),
+            mutation(ds.GetData(0, 0, 1024))
+        { }
+
+        OQS_KEM_SelfTest(nlohmann::json json) :
+            Operation(json["modifier"]),
+            selector(json["selector"].get<uint64_t>()),
+            entropy(json["entropy"]),
+            mutation(json["mutation"])
+        { }
+
+        static size_t MaxOperations(void) { return 5; }
+        std::string Name(void) const override;
+        std::string ToString(void) const override;
+        nlohmann::json ToJSON(void) const override;
+        std::string GetAlgorithmString(void) const override {
+            return "liboqs-kem";
+        }
+        inline bool operator==(const OQS_KEM_SelfTest& rhs) const {
+            return
+                (selector == rhs.selector) &&
+                (entropy == rhs.entropy) &&
+                (mutation == rhs.mutation) &&
+                (modifier == rhs.modifier);
+        }
+        void Serialize(Datasource& ds) const {
+            ds.Put<>(selector);
+            entropy.Serialize(ds);
+            mutation.Serialize(ds);
+        }
+};
+
+class OQS_SIG_SelfTest : public Operation {
+    public:
+        const uint64_t selector;
+        const Buffer entropy;
+        const Buffer message;
+        const Buffer mutation;
+
+        OQS_SIG_SelfTest(Datasource& ds, component::Modifier modifier) :
+            Operation(std::move(modifier)),
+            selector(ds.Get<uint64_t>()),
+            entropy(ds.GetData(0, 0, 4096)),
+            message(ds.GetData(0, 0, 4096)),
+            mutation(ds.GetData(0, 0, 1024))
+        { }
+
+        OQS_SIG_SelfTest(nlohmann::json json) :
+            Operation(json["modifier"]),
+            selector(json["selector"].get<uint64_t>()),
+            entropy(json["entropy"]),
+            message(json["message"]),
+            mutation(json["mutation"])
+        { }
+
+        static size_t MaxOperations(void) { return 5; }
+        std::string Name(void) const override;
+        std::string ToString(void) const override;
+        nlohmann::json ToJSON(void) const override;
+        std::string GetAlgorithmString(void) const override {
+            return "liboqs-sig";
+        }
+        inline bool operator==(const OQS_SIG_SelfTest& rhs) const {
+            return
+                (selector == rhs.selector) &&
+                (entropy == rhs.entropy) &&
+                (message == rhs.message) &&
+                (mutation == rhs.mutation) &&
+                (modifier == rhs.modifier);
+        }
+        void Serialize(Datasource& ds) const {
+            ds.Put<>(selector);
+            entropy.Serialize(ds);
+            message.Serialize(ds);
+            mutation.Serialize(ds);
+        }
+};
+
 class SR25519_Verify : public Operation {
     public:
         const component::Cleartext cleartext;

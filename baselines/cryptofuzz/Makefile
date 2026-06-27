@@ -13,7 +13,7 @@ bignum_fuzzer_importer.o botan_importer.o builtin_tests_importer.o components.o 
 ecc_diff_fuzzer_exporter.o ecc_diff_fuzzer_importer.o entry.o executor.o expmod.o mutator.o mutatorpool.o numbers.o \
 openssl_importer.o operation.o options.o repository.o tests.o util.o wycheproof.o z3.o
 OBJECT_FILES = $(addprefix $(BUILD_DIR)/,$(OBJECT_NAMES))
-MODULE_ARCHIVES = $(shell find modules -type f -name module.a)
+MODULE_ARCHIVES = $(shell find modules -type f -name module.a) $(EXTRA_MODULE_ARCHIVES)
 
 $(BUILD_DIR):
 	mkdir -p $@
