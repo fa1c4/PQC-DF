@@ -12,6 +12,7 @@ Git platform metadata such as `.github/`, `.gitmodules`, and `.gitattributes` is
 
 - `cryptofuzz`
 - `CLFuzz`
+- `libFuzzer`
 - `cryptoTesting`
 
 ## Running baselines
@@ -34,6 +35,14 @@ scripts/run_baseline.sh CLFuzz build
 scripts/run_baseline.sh CLFuzz run
 scripts/run_baseline.sh CLFuzz build --version 0.14.0
 scripts/run_baseline.sh CLFuzz run --version 0.14.0 --mode smoke
+
+scripts/run_baseline.sh libFuzzer docker-build
+scripts/run_baseline.sh libFuzzer build --version 0.14.0
+scripts/run_baseline.sh libFuzzer run --version 0.14.0 --target all --mode smoke
+scripts/run_baseline.sh libFuzzer build --version 0.8.0
+scripts/run_baseline.sh libFuzzer run --version 0.8.0 --target all --mode smoke
+scripts/run_baseline.sh libFuzzer build --version 0.4.0
+scripts/run_baseline.sh libFuzzer run --version 0.4.0 --target all --mode smoke
 
 scripts/run_baseline.sh cryptoTesting build
 scripts/run_baseline.sh cryptoTesting run

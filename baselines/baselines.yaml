@@ -15,6 +15,14 @@ baselines:
     dispatcher_name: CLFuzz
     notes: "Vendored baseline fuzzer. Upstream Git metadata removed."
 
+  libFuzzer:
+    path: baselines/libFuzzer
+    dockerfile: baselines/libFuzzer/Dockerfile
+    build_dir: workspace/libFuzzer/targets-build
+    run_dir: workspace/libFuzzer/targets-run
+    dispatcher_name: libFuzzer
+    notes: "Standalone stock libFuzzer baseline for liboqs KEM/SIG lifecycle fuzzing."
+
   cryptoTesting:
     path: baselines/cryptoTesting
     dockerfile: baselines/cryptoTesting/Dockerfile

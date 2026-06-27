@@ -9,6 +9,7 @@ Usage:
 Baselines:
   cryptofuzz
   CLFuzz
+  libFuzzer
   cryptoTesting
 
 Commands:
@@ -21,6 +22,7 @@ Commands:
 Examples:
   scripts/run_baseline.sh cryptofuzz build
   scripts/run_baseline.sh CLFuzz run
+  scripts/run_baseline.sh libFuzzer run --version 0.14.0 --target all --mode smoke
   scripts/run_baseline.sh cryptoTesting docker-build
   scripts/run_baseline.sh cryptoTesting run --version 0.14.0
 
@@ -47,6 +49,10 @@ case "$BASELINE" in
   CLFuzz)
     BASELINE_DIR="baselines/CLFuzz"
     IMAGE_NAME="pqcdf-baseline-clfuzz"
+    ;;
+  libFuzzer)
+    BASELINE_DIR="baselines/libFuzzer"
+    IMAGE_NAME="pqcdf-baseline-libfuzzer"
     ;;
   cryptoTesting)
     BASELINE_DIR="baselines/cryptoTesting"
