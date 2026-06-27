@@ -67,6 +67,8 @@ void test(const operation::BLS_G2_Mul& op, const std::optional<component::G2>& r
 void test(const operation::BLS_G2_IsEq& op, const std::optional<bool>& result);
 void test(const operation::BLS_G2_Neg& op, const std::optional<component::G2>& result);
 void test(const operation::Misc& op, const std::optional<Buffer>& result);
+void test(const operation::OQS_KEM_SelfTest& op, const std::optional<bool>& result);
+void test(const operation::OQS_SIG_SelfTest& op, const std::optional<bool>& result);
 void test(const operation::SR25519_Verify& op, const std::optional<bool>& result);
 
 } /* namespace tests */

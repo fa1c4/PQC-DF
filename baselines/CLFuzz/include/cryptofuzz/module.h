@@ -267,6 +267,14 @@ class Module {
             (void)op;
             return std::nullopt;
         }
+        virtual std::optional<bool> OpOQSKEMSelfTest(operation::OQS_KEM_SelfTest& op) {
+            (void)op;
+            return std::nullopt;
+        }
+        virtual std::optional<bool> OpOQSSIGSelfTest(operation::OQS_SIG_SelfTest& op) {
+            (void)op;
+            return std::nullopt;
+        }
         virtual std::optional<bool> OpSR25519_Verify(operation::SR25519_Verify& op) {
             (void)op;
             return std::nullopt;

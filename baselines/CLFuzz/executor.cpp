@@ -109,7 +109,13 @@ template<> void ExecutorBase<component::Ciphertext, operation::SymmetricEncrypt>
 
         if ( tryDecrypt == true ) {
             /* Try to decrypt the encrypted data */
-            Pool_BlockCipherEncrypt.Set({op.cipher.key, op.cipher.iv, op.cleartext, op.cipher.cipherType, op.cleartext.GetSize() + 32,  *(result.second)})
+            Pool_BlockCipherEncrypt.Set({
+                    op.cipher.key.ToHex(),
+                    op.cipher.iv.ToHex(),
+                    op.cleartext.ToHex(),
+                    op.cipher.cipherType.Get(),
+                    op.cleartext.GetSize() + 32,
+                    result.second->ciphertext.ToHex()});
             /* Construct a SymmetricDecrypt instance with the SymmetricEncrypt instance */
             auto opDecrypt = operation::SymmetricDecrypt(
                     /* The SymmetricEncrypt instance */
@@ -1455,6 +1461,28 @@ template<> std::optional<Buffer> ExecutorBase<Buffer, operation::Misc>::callModu
     return module->OpMisc(op);
 }
 
+/* Specialization for operation::OQS_KEM_SelfTest */
+template<> void ExecutorBase<bool, operation::OQS_KEM_SelfTest>::postprocess(std::shared_ptr<Module> module, operation::OQS_KEM_SelfTest& op, const ExecutorBase<bool, operation::OQS_KEM_SelfTest>::ResultPair& result) const {
+    if ( result.second != std::nullopt && *result.second == false ) {
+        abort({module->name}, op.Name(), op.GetAlgorithmString(), "liboqs KEM self-check failed");
+    }
+}
+
+template<> std::optional<bool> ExecutorBase<bool, operation::OQS_KEM_SelfTest>::callModule(std::shared_ptr<Module> module, operation::OQS_KEM_SelfTest& op) const {
+    return module->OpOQSKEMSelfTest(op);
+}
+
+/* Specialization for operation::OQS_SIG_SelfTest */
+template<> void ExecutorBase<bool, operation::OQS_SIG_SelfTest>::postprocess(std::shared_ptr<Module> module, operation::OQS_SIG_SelfTest& op, const ExecutorBase<bool, operation::OQS_SIG_SelfTest>::ResultPair& result) const {
+    if ( result.second != std::nullopt && *result.second == false ) {
+        abort({module->name}, op.Name(), op.GetAlgorithmString(), "liboqs SIG self-check failed");
+    }
+}
+
+template<> std::optional<bool> ExecutorBase<bool, operation::OQS_SIG_SelfTest>::callModule(std::shared_ptr<Module> module, operation::OQS_SIG_SelfTest& op) const {
+    return module->OpOQSSIGSelfTest(op);
+}
+
 /* Specialization for operation::BLS_HashToG2 */
 template<> void ExecutorBase<component::G2, operation::BLS_HashToG2>::postprocess(std::shared_ptr<Module> module, operation::BLS_HashToG2& op, const ExecutorBase<component::G2, operation::BLS_HashToG2>::ResultPair& result) const {
     (void)module;
@@ -1962,6 +1990,8 @@ template class ExecutorBase<component::G2, operation::BLS_G2_Mul>;
 template class ExecutorBase<bool, operation::BLS_G2_IsEq>;
 template class ExecutorBase<component::G2, operation::BLS_G2_Neg>;
 template class ExecutorBase<Buffer, operation::Misc>;
+template class ExecutorBase<bool, operation::OQS_KEM_SelfTest>;
+template class ExecutorBase<bool, operation::OQS_SIG_SelfTest>;
 template class ExecutorBase<bool, operation::SR25519_Verify>;
 
 } /* namespace cryptofuzz */

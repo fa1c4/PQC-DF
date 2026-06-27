@@ -10,7 +10,7 @@ REPOSITORY_STAMP = $(BUILD_DIR)/repository.stamp
 REPOSITORY_HEADERS = $(BUILD_DIR)/repository_tbl.h $(BUILD_DIR)/repository_map.h
 OBJECT_NAMES = driver.o executor.o util.o entry.o tests.o operation.o datasource.o repository.o options.o components.o wycheproof.o crypto.o input_generator.o numbers.o recyclepool.o ecc_diff_fuzzer_importer.o botan_importer.o
 OBJECT_FILES = $(addprefix $(BUILD_DIR)/,$(OBJECT_NAMES))
-MODULE_ARCHIVES = $(shell find modules -type f -name module.a)
+MODULE_ARCHIVES = $(shell find modules -type f -name module.a) $(EXTRA_MODULE_ARCHIVES)
 
 $(BUILD_DIR):
 	mkdir -p $@

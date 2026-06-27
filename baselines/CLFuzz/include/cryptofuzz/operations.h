@@ -489,7 +489,7 @@ class SymmetricDecrypt : public Operation {
             cipher(ds),
             tag(ds.Get<bool>() ? std::nullopt : std::make_optional<component::Tag>(ds)),
             aad(ds.Get<bool>() ? std::nullopt : std::make_optional<component::AAD>(ds)),
-            cleartextSize(ds.Get<uint64_t>() % (10*1024*1024))
+            cleartextSize(ds.Get<uint64_t>() % (10*1024*1024)),
             expected(ds.Get<uint8_t>())
         { }
         SymmetricDecrypt(const SymmetricEncrypt& opSymmetricEncrypt, const component::Ciphertext ciphertext, const uint64_t cleartextSize, std::optional<component::AAD> aad, component::Modifier modifier);
@@ -507,7 +507,8 @@ class SymmetricDecrypt : public Operation {
                         std::optional<component::AAD>(json["aad"]) :
                         std::optional<component::AAD>(std::nullopt)
             ),
-            cleartextSize(json["cleartextSize"].get<uint64_t>())
+            cleartextSize(json["cleartextSize"].get<uint64_t>()),
+            expected(json["expected"].get<uint8_t>())
         { }
 
         static size_t MaxOperations(void) { return 20; }
@@ -524,6 +525,7 @@ class SymmetricDecrypt : public Operation {
                 (tag == rhs.tag) &&
                 (aad == rhs.aad) &&
                 (cleartextSize == rhs.cleartextSize) &&
+                (expected == rhs.expected) &&
                 (modifier == rhs.modifier);
         }
         void Serialize(Datasource& ds) const {
@@ -542,6 +544,7 @@ class SymmetricDecrypt : public Operation {
                 aad->Serialize(ds);
             }
             ds.Put<>(cleartextSize);
+            ds.Put<>(expected);
         }
 };
 
@@ -3019,6 +3022,93 @@ class Misc : public Operation {
         }
         void Serialize(Datasource& ds) const {
             operation.Serialize(ds);
+        }
+};
+
+class OQS_KEM_SelfTest : public Operation {
+    public:
+        const uint64_t selector;
+        const Buffer entropy;
+        const Buffer mutation;
+
+        OQS_KEM_SelfTest(Datasource& ds, component::Modifier modifier) :
+            Operation(std::move(modifier)),
+            selector(ds.Get<uint64_t>()),
+            entropy(ds.GetData(0, 0, 4096)),
+            mutation(ds.GetData(0, 0, 1024))
+        { }
+
+        OQS_KEM_SelfTest(nlohmann::json json) :
+            Operation(json["modifier"]),
+            selector(json["selector"].get<uint64_t>()),
+            entropy(json["entropy"]),
+            mutation(json["mutation"])
+        { }
+
+        static size_t MaxOperations(void) { return 5; }
+        std::string Name(void) const override;
+        std::string ToString(void) const override;
+        nlohmann::json ToJSON(void) const override;
+        std::string GetAlgorithmString(void) const override {
+            return "liboqs-kem";
+        }
+        inline bool operator==(const OQS_KEM_SelfTest& rhs) const {
+            return
+                (selector == rhs.selector) &&
+                (entropy == rhs.entropy) &&
+                (mutation == rhs.mutation) &&
+                (modifier == rhs.modifier);
+        }
+        void Serialize(Datasource& ds) const {
+            ds.Put<>(selector);
+            entropy.Serialize(ds);
+            mutation.Serialize(ds);
+        }
+};
+
+class OQS_SIG_SelfTest : public Operation {
+    public:
+        const uint64_t selector;
+        const Buffer entropy;
+        const Buffer message;
+        const Buffer mutation;
+
+        OQS_SIG_SelfTest(Datasource& ds, component::Modifier modifier) :
+            Operation(std::move(modifier)),
+            selector(ds.Get<uint64_t>()),
+            entropy(ds.GetData(0, 0, 4096)),
+            message(ds.GetData(0, 0, 4096)),
+            mutation(ds.GetData(0, 0, 1024))
+        { }
+
+        OQS_SIG_SelfTest(nlohmann::json json) :
+            Operation(json["modifier"]),
+            selector(json["selector"].get<uint64_t>()),
+            entropy(json["entropy"]),
+            message(json["message"]),
+            mutation(json["mutation"])
+        { }
+
+        static size_t MaxOperations(void) { return 5; }
+        std::string Name(void) const override;
+        std::string ToString(void) const override;
+        nlohmann::json ToJSON(void) const override;
+        std::string GetAlgorithmString(void) const override {
+            return "liboqs-sig";
+        }
+        inline bool operator==(const OQS_SIG_SelfTest& rhs) const {
+            return
+                (selector == rhs.selector) &&
+                (entropy == rhs.entropy) &&
+                (message == rhs.message) &&
+                (mutation == rhs.mutation) &&
+                (modifier == rhs.modifier);
+        }
+        void Serialize(Datasource& ds) const {
+            ds.Put<>(selector);
+            entropy.Serialize(ds);
+            message.Serialize(ds);
+            mutation.Serialize(ds);
         }
 };
 

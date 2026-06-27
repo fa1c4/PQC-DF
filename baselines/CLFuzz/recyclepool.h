@@ -121,7 +121,7 @@ struct EncryptionKey{
     uint64_t cipherID;
     uint64_t cleartextSize;
     std::string ciphertext;
-}
+};
 
 extern MutatorPool<CurveBLSG1_Compress, cryptofuzz::config::kMutatorPoolSize> Pool_CurveBLSG1_Compress;
 extern MutatorPool<CurveBLSG2_Compress, cryptofuzz::config::kMutatorPoolSize> Pool_CurveBLSG2_Compress;

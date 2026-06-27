@@ -90,6 +90,7 @@ std::string SymmetricDecrypt::ToString(void) const {
     ss << "cipher key: " << util::HexDump(cipher.key.Get()) << std::endl;
     ss << "cipher: " << repository::CipherToString(cipher.cipherType.Get()) << std::endl;
     ss << "cleartextSize: " << std::to_string(cleartextSize) << std::endl;
+    ss << "expected: " << std::to_string(expected) << std::endl;
 
     return ss.str();
 }
@@ -104,6 +105,7 @@ nlohmann::json SymmetricDecrypt::ToJSON(void) const {
     j["tag_enabled"] = (bool)(tag != std::nullopt);
     j["tag"] = tag != std::nullopt ? tag->ToJSON() : "";
     j["cleartextSize"] = cleartextSize;
+    j["expected"] = expected;
     j["modifier"] = modifier.ToJSON();
     return j;
 }
@@ -115,7 +117,8 @@ SymmetricDecrypt::SymmetricDecrypt(const SymmetricEncrypt& opSymmetricEncrypt, c
     cipher(opSymmetricEncrypt.cipher),
     tag(ciphertext.tag),
     aad(aad),
-    cleartextSize(cleartextSize)
+    cleartextSize(cleartextSize),
+    expected(1)
 { }
 
 std::string KDF_SCRYPT::Name(void) const { return "KDF_SCRYPT"; }
@@ -1704,6 +1707,52 @@ std::string Misc::ToString(void) const {
 nlohmann::json Misc::ToJSON(void) const {
     nlohmann::json j;
     j["operation"] = operation.ToJSON();
+    j["modifier"] = modifier.ToJSON();
+    return j;
+}
+
+std::string OQS_KEM_SelfTest::Name(void) const { return "OQS_KEM_SelfTest"; }
+std::string OQS_KEM_SelfTest::ToString(void) const {
+    std::stringstream ss;
+
+    ss << "operation name: OQS_KEM_SelfTest" << std::endl;
+    ss << "selector: " << std::to_string(selector) << std::endl;
+    ss << "entropy: " << util::HexDump(entropy.Get()) << std::endl;
+    ss << "mutation: " << util::HexDump(mutation.Get()) << std::endl;
+
+    return ss.str();
+}
+
+nlohmann::json OQS_KEM_SelfTest::ToJSON(void) const {
+    nlohmann::json j;
+    j["operation"] = "OQS_KEM_SelfTest";
+    j["selector"] = selector;
+    j["entropy"] = entropy.ToJSON();
+    j["mutation"] = mutation.ToJSON();
+    j["modifier"] = modifier.ToJSON();
+    return j;
+}
+
+std::string OQS_SIG_SelfTest::Name(void) const { return "OQS_SIG_SelfTest"; }
+std::string OQS_SIG_SelfTest::ToString(void) const {
+    std::stringstream ss;
+
+    ss << "operation name: OQS_SIG_SelfTest" << std::endl;
+    ss << "selector: " << std::to_string(selector) << std::endl;
+    ss << "entropy: " << util::HexDump(entropy.Get()) << std::endl;
+    ss << "message: " << util::HexDump(message.Get()) << std::endl;
+    ss << "mutation: " << util::HexDump(mutation.Get()) << std::endl;
+
+    return ss.str();
+}
+
+nlohmann::json OQS_SIG_SelfTest::ToJSON(void) const {
+    nlohmann::json j;
+    j["operation"] = "OQS_SIG_SelfTest";
+    j["selector"] = selector;
+    j["entropy"] = entropy.ToJSON();
+    j["message"] = message.ToJSON();
+    j["mutation"] = mutation.ToJSON();
     j["modifier"] = modifier.ToJSON();
     return j;
 }

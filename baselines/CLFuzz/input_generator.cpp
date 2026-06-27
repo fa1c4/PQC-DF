@@ -663,7 +663,7 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t* data, size_t size, size_t max
     bool reuseModifier;
 
     if ( maxSize < 64 || getBool() ) {
-        goto end;
+        return out_size;
     }
 
     reuseModifier = getBool();
@@ -779,7 +779,8 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t* data, size_t size, size_t max
                             lengths[1] = 16;
                         }
                     }
-                    parameters["cipher"]["cipherType"] = getRandomCipher();
+                    uint64_t ciphertype = getRandomCipher();
+                    parameters["cipher"]["cipherType"] = ciphertype;
                     parameters["cipher"]["iv"] = getSeedIV(0, ciphertype);
                     parameters["cipher"]["key"] = getSeedKey(lengths[3], ciphertype);
                     std::string cleartext = "";
@@ -843,32 +844,27 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t* data, size_t size, size_t max
                             lengths[1] = 16;
                         }
                     }
-                    switch (PRNG() % 2){
-                        case 0: {
-                            // get from pool
-                            if ( Pool_BlockCipherEncrypt.Have() ) {
-                                const auto P = Pool_BlockCipherEncrypt.Get();
-                                parameters["ciphertext"] = P.ciphertext;
-                                parameters["cipher"]["iv"] = P.iv;
-                                parameters["cipher"]["key"] = P.key;
-                                parameters["cleartextSize"] = P.cleartextSize
-                                expected = 1;
-                                break;
-                            } 
-                        default: {
-                            parameters["cipher"]["cipherType"] = getRandomCipher();
-                            std::string ciphertext = "";
-                            if(ciphertype == CF_CIPHER("AES")){
-                                ciphertext = getBuffer(16*(PRNG()%10));
-                            }else{
-                                ciphertext = getSeedCipherText(lengths[1], ciphertype);
-                            }
-                            parameters["ciphertext"] = ciphertext;
-                            parameters["cipher"]["iv"] = getSeedIV(lengths[2], ciphertype);
-                            parameters["cipher"]["key"] = getSeedKey(lengths[3], ciphertype);
-                            parameters["cleartextSize"] = ciphertext.length() + PRNG() % 10;
-                            break;
+                    uint64_t ciphertype = getRandomCipher();
+                    if ( (PRNG() % 2) == 0 && Pool_BlockCipherEncrypt.Have() ) {
+                        const auto P = Pool_BlockCipherEncrypt.Get();
+                        parameters["ciphertext"] = P.ciphertext;
+                        parameters["cipher"]["cipherType"] = P.cipherID;
+                        parameters["cipher"]["iv"] = P.iv;
+                        parameters["cipher"]["key"] = P.key;
+                        parameters["cleartextSize"] = P.cleartextSize;
+                        expected = 1;
+                    } else {
+                        parameters["cipher"]["cipherType"] = ciphertype;
+                        std::string ciphertext = "";
+                        if(ciphertype == CF_CIPHER("AES")){
+                            ciphertext = getBuffer(16*(PRNG()%10));
+                        }else{
+                            ciphertext = getSeedCipherText(lengths[1], ciphertype);
                         }
+                        parameters["ciphertext"] = ciphertext;
+                        parameters["cipher"]["iv"] = getSeedIV(lengths[2], ciphertype);
+                        parameters["cipher"]["key"] = getSeedKey(lengths[3], ciphertype);
+                        parameters["cleartextSize"] = ciphertext.length() + PRNG() % 10;
                     }
         
 
@@ -1429,7 +1425,6 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t* data, size_t size, size_t max
                 }
                 break;
             case    CF_OPERATION("ECC_Point_Add"):
-            case    CF_OPERATION("ECC_Point_Mul"):
                 {
                     parameters["modifier"] = "";
                     if (Pool_CurveECC_Point.Have() == true ) {
@@ -2504,6 +2499,29 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t* data, size_t size, size_t max
                     op.Serialize(dsOut2);
                 }
                 break;
+            case    CF_OPERATION("OQS_KEM_SelfTest"):
+                {
+                    parameters["modifier"] = getBuffer(PRNG() % 1024);
+                    parameters["selector"] = PRNG();
+                    parameters["entropy"] = getBuffer(PRNG() % 4096);
+                    parameters["mutation"] = getBuffer(PRNG() % 1024);
+
+                    cryptofuzz::operation::OQS_KEM_SelfTest op(parameters);
+                    op.Serialize(dsOut2);
+                }
+                break;
+            case    CF_OPERATION("OQS_SIG_SelfTest"):
+                {
+                    parameters["modifier"] = getBuffer(PRNG() % 1024);
+                    parameters["selector"] = PRNG();
+                    parameters["entropy"] = getBuffer(PRNG() % 4096);
+                    parameters["message"] = getBuffer(PRNG() % 4096);
+                    parameters["mutation"] = getBuffer(PRNG() % 1024);
+
+                    cryptofuzz::operation::OQS_SIG_SelfTest op(parameters);
+                    op.Serialize(dsOut2);
+                }
+                break;
             case    CF_OPERATION("SR25519_Verify"):
                 {
                     parameters["modifier"] = getBuffer(PRNG() % 1024);
@@ -2520,7 +2538,7 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t* data, size_t size, size_t max
                 }
                 break;
             default:
-                goto end;
+                return out_size;
         }
 #undef GET_OR_BIGNUM
 
@@ -2558,6 +2576,5 @@ extern "C" size_t LLVMFuzzerCustomMutator(uint8_t* data, size_t size, size_t max
         }
     }
 
-end:
     return out_size;
 }

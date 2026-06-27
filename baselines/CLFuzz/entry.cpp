@@ -19,7 +19,7 @@
 #error "trezor-firmware and relic cannot be used together due to symbol collisions"
 #endif
 
-#if !defined(CRYPTOFUZZ_NO_OPENSSL)
+#if !defined(CRYPTOFUZZ_NO_OPENSSL) && !defined(CRYPTOFUZZ_LIBOQS)
   #include <modules/openssl/module.h>
   #ifdef SHA1
     #undef SHA1
@@ -36,6 +36,10 @@
   #ifdef SHA512
     #undef SHA512
   #endif
+#endif
+
+#if defined(CRYPTOFUZZ_LIBOQS)
+  #include <modules/liboqs/module.h>
 #endif
 
 #if defined(CRYPTOFUZZ_BITCOIN)
@@ -282,7 +286,7 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv) {
     setOptions(*argc, *argv);
     addNumbers();
 
-#if !defined(CRYPTOFUZZ_NO_OPENSSL)
+#if !defined(CRYPTOFUZZ_NO_OPENSSL) && !defined(CRYPTOFUZZ_LIBOQS)
     driver->LoadModule( std::make_shared<cryptofuzz::module::OpenSSL>() );
 #endif
 
@@ -388,6 +392,10 @@ extern "C" int LLVMFuzzerInitialize(int *argc, char ***argv) {
 
 #if defined(CRYPTOFUZZ_LIBTOMMATH)
     driver->LoadModule( std::make_shared<cryptofuzz::module::libtommath>() );
+#endif
+
+#if defined(CRYPTOFUZZ_LIBOQS)
+    driver->LoadModule( std::make_shared<cryptofuzz::module::liboqs>() );
 #endif
 
 #if defined(CRYPTOFUZZ_SJCL)
