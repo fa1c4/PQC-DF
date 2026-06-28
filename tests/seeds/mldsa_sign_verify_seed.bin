@@ -1,0 +1,11 @@
+{
+  "magic": "PQCF",
+  "version": 1,
+  "algorithm": "ML-DSA-65",
+  "oracle_id": "mldsa_local_sign_verify",
+  "flags": 0,
+  "seed_b64": "cHFjZnV6ei1tbGRzYS1zaWduLXZlcmlmeS1zZWVk",
+  "msg_b64": "cHFjZnV6ei1tbGRzYS1tZXNzYWdl",
+  "mutation_b64": "",
+  "extra_b64": ""
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pqcfuzz.local/schemas/finding.schema.json",
+  "type": "object",
+  "required": [
+    "version",
+    "finding_id",
+    "job_id",
+    "pair_id",
+    "algorithm",
+    "oracle_id",
+    "finding_class",
+    "summary",
+    "trace_path",
+    "artifact_dir"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "finding_class": {
+      "enum": [
+        "confirmed_semantic_bug",
+        "potential_crypto_vuln",
+        "memory_safety",
+        "ub",
+        "timeout",
+        "api_policy_difference"
+      ]
+    }
+  }
+}

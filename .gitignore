@@ -19,7 +19,7 @@ projects/*
 !projects/download_pqlibs.sh
 !projects/.gitkeep
 
-# PQC-DF runtime workspace artifacts
+# PQCFuzz runtime workspace artifacts
 workspace/
 
 # Logs and crash byproducts

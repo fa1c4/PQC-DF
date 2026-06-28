@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pqcfuzz.local/schemas/oracle_spec.schema.json",
+  "type": "object",
+  "required": [
+    "oracles"
+  ],
+  "properties": {
+    "oracles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "oracle_id",
+          "algorithm_family",
+          "primitive_type",
+          "api_surface",
+          "precondition",
+          "mutation",
+          "expected_relation",
+          "comparator",
+          "triage_policy"
+        ],
+        "properties": {
+          "oracle_id": {
+            "type": "string"
+          },
+          "algorithm_family": {
+            "enum": [
+              "ML-KEM",
+              "ML-DSA",
+              "SLH-DSA"
+            ]
+          },
+          "primitive_type": {
+            "enum": [
+              "kem",
+              "sig"
+            ]
+          },
+          "api_surface": {
+            "type": "array",
+            "items": {
+              "enum": [
+                "keygen",
+              "encaps",
+                "decaps",
+                "sign",
+                "verify"
+              ]
+            }
+          },
+          "precondition": {
+            "type": "object"
+          },
+          "mutation": {
+            "type": "object"
+          },
+          "expected_relation": {
+            "type": "string"
+          },
+          "comparator": {
+            "type": "string"
+          },
+          "triage_policy": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

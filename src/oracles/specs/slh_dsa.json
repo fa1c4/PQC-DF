@@ -1,0 +1,136 @@
+{
+  "oracles": [
+    {
+      "oracle_id": "slhdsa_local_sign_verify",
+      "algorithm_family": "SLH-DSA",
+      "primitive_type": "sig",
+      "api_surface": [
+        "keygen",
+        "sign",
+        "verify"
+      ],
+      "precondition": {
+        "valid_lengths": true,
+        "ctx_len_lte_255": true
+      },
+      "mutation": {
+        "type": "none"
+      },
+      "expected_relation": "VERIFY_TRUE",
+      "comparator": "verify_accepts",
+      "triage_policy": "semantic_mismatch_requires_manual_review"
+    },
+    {
+      "oracle_id": "slhdsa_cross_verify",
+      "algorithm_family": "SLH-DSA",
+      "primitive_type": "sig",
+      "api_surface": [
+        "keygen",
+        "sign",
+        "verify"
+      ],
+      "precondition": {
+        "pair_alg_exchange_contract_required": [
+          "public_key_exchange",
+          "signature_exchange"
+        ],
+        "ctx_len_lte_255": true
+      },
+      "mutation": {
+        "type": "none"
+      },
+      "expected_relation": "VERIFY_TRUE",
+      "comparator": "verify_accepts",
+      "triage_policy": "semantic_mismatch_requires_manual_review"
+    },
+    {
+      "oracle_id": "slhdsa_mutated_signature_negative",
+      "algorithm_family": "SLH-DSA",
+      "primitive_type": "sig",
+      "api_surface": [
+        "keygen",
+        "sign",
+        "verify"
+      ],
+      "precondition": {
+        "valid_signature_before_mutation": true
+      },
+      "mutation": {
+        "type": "field_aware",
+        "targets": [
+          "signature.R",
+          "signature.SIGFORS",
+          "signature.SIGHT",
+          "signature.WOTS",
+          "signature.XMSS_AUTH_PATH"
+        ]
+      },
+      "expected_relation": "VERIFY_FALSE_OR_DECODE_REJECT_OR_API_INVALID_INPUT",
+      "comparator": "verify_rejects_or_decode_rejects",
+      "triage_policy": "potential_crypto_vuln_if_mutated_signature_verifies"
+    },
+    {
+      "oracle_id": "slhdsa_mutated_message_negative",
+      "algorithm_family": "SLH-DSA",
+      "primitive_type": "sig",
+      "api_surface": [
+        "keygen",
+        "sign",
+        "verify"
+      ],
+      "precondition": {
+        "valid_signature_before_mutation": true
+      },
+      "mutation": {
+        "type": "message_mutation"
+      },
+      "expected_relation": "VERIFY_FALSE",
+      "comparator": "verify_rejects",
+      "triage_policy": "potential_crypto_vuln_if_mutated_message_verifies"
+    },
+    {
+      "oracle_id": "slhdsa_mutated_context_negative",
+      "algorithm_family": "SLH-DSA",
+      "primitive_type": "sig",
+      "api_surface": [
+        "keygen",
+        "sign",
+        "verify"
+      ],
+      "precondition": {
+        "ctx_len_lte_255": true
+      },
+      "mutation": {
+        "type": "context_mutation",
+        "targets": [
+          "ctx"
+        ]
+      },
+      "expected_relation": "VERIFY_FALSE_OR_API_UNSUPPORTED",
+      "comparator": "verify_rejects_or_api_unsupported",
+      "triage_policy": "potential_crypto_vuln_if_mutated_context_verifies"
+    },
+    {
+      "oracle_id": "slhdsa_bad_randomness_sanity",
+      "algorithm_family": "SLH-DSA",
+      "primitive_type": "sig",
+      "api_surface": [
+        "keygen",
+        "sign"
+      ],
+      "precondition": {
+        "rng_injection_available": true
+      },
+      "mutation": {
+        "type": "bad_randomness",
+        "patterns": [
+          "all_zero",
+          "reused_seed"
+        ]
+      },
+      "expected_relation": "NO_CRASH",
+      "comparator": "status_only",
+      "triage_policy": "api_unsupported_is_not_failure"
+    }
+  ]
+}

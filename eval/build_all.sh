@@ -4,16 +4,18 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-python3 differential_fuzzer/diff_fuzzer.py
+python3 src/pairing/validate_pair_alg.py --pair-alg src/config/pair_alg.default.json
+python3 src/jobs/generate_jobs.py --pair-alg src/config/pair_alg.default.json --algorithm-family ML-KEM
+python3 src/jobs/generate_jobs.py --pair-alg src/config/pair_alg.default.json --algorithm-family ML-DSA
+python3 src/jobs/generate_jobs.py --pair-alg src/config/pair_alg.default.json --algorithm-family SLH-DSA
 
 python3 - <<'PY'
 import json
 from pathlib import Path
 
-jobs = json.loads(Path("differential_fuzzer/data/fuzzer_jobs.json").read_text())
-for job in jobs:
+for path in sorted(Path("workspace/jobs").glob("job_*.json")):
+    job = json.loads(path.read_text())
     print(job["job_id"])
 PY
 
-echo "Build orchestration is scaffolded, but native project compilation is not implemented yet."
-
+echo "Job generation complete. Use eval/build_one.sh <job_id> for the native fuzzer build path."

@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "project_name": "PQCFuzz",
+  "active_source_root": "src",
+  "workspace_root": "workspace",
+  "default_pair_alg": "src/config/pair_alg.default.json",
+  "default_oracle_spec": "src/oracles/specs/ml_kem.json",
+  "fuzzer_source": "src/fuzzers/kem_pair_fuzzer.cc",
+  "enabled_algorithm_families": [
+    "ML-KEM",
+    "ML-DSA",
+    "SLH-DSA"
+  ],
+  "enabled_primitive_types": [
+    "kem",
+    "sig"
+  ],
+  "finding_classes": [
+    "confirmed_semantic_bug",
+    "potential_crypto_vuln",
+    "memory_safety",
+    "ub",
+    "timeout",
+    "api_policy_difference"
+  ],
+  "resource_defaults": {
+    "timeout_seconds": 30,
+    "rss_mb": 2048
+  },
+  "artifact_policy": {
+    "write_stdout": true,
+    "write_stderr": true,
+    "write_oracle_trace": true,
+    "write_minimized_seed": true,
+    "write_poc": true
+  }
+}

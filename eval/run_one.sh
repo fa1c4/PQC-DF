@@ -22,30 +22,43 @@ done
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
-jobs_file="$repo_root/differential_fuzzer/data/fuzzer_jobs.json"
-if [[ ! -f "$jobs_file" ]]; then
-  echo "missing $jobs_file; run python3 differential_fuzzer/diff_fuzzer.py first." >&2
+job_file="$repo_root/workspace/jobs/$job_id.json"
+if [[ ! -f "$job_file" ]]; then
+  echo "missing $job_file; run eval/build_all.sh first." >&2
   exit 1
 fi
 
-job_json="$(jq -c --arg job_id "$job_id" '.[] | select(.job_id == $job_id)' "$jobs_file")"
-if [[ -z "$job_json" ]]; then
-  echo "unknown job_id '$job_id'" >&2
+job_fields="$(python3 - "$job_file" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    job = json.load(handle)
+paths = job.get("paths", {})
+fields = [
+    job.get("primitive_type", ""),
+    job.get("algorithm_family", ""),
+    paths.get("build_dir", ""),
+    paths.get("run_dir", ""),
+    paths.get("result_dir", ""),
+    paths.get("crash_dir", ""),
+]
+print("\t".join(fields))
+PY
+)"
+IFS=$'\t' read -r primitive_type algorithm_family build_dir_rel run_dir_rel result_dir_rel crash_dir_rel <<<"$job_fields"
+
+if [[ "$primitive_type" != "kem" && "$primitive_type" != "sig" ]]; then
+  echo "run_one.sh supports generated kem and sig jobs; '$job_id' uses primitive '$primitive_type'." >&2
   exit 1
 fi
 
-primitive_type="$(jq -r '.primitive_type' <<<"$job_json")"
-if [[ "$primitive_type" != "kpke" ]]; then
-  echo "run_one.sh currently supports only kpke jobs; '$job_id' uses primitive '$primitive_type'." >&2
-  exit 1
-fi
-
-build_dir="$repo_root/$(jq -r '.build_dir' <<<"$job_json")"
-run_dir="$repo_root/$(jq -r '.run_dir' <<<"$job_json")"
-result_dir="$repo_root/$(jq -r '.result_dir' <<<"$job_json")"
-crash_dir="$repo_root/$(jq -r '.crash_dir' <<<"$job_json")"
-timeout_seconds="$(jq -r '.resource_defaults.timeout_seconds' <<<"$job_json")"
-rss_mb="$(jq -r '.resource_defaults.rss_mb' <<<"$job_json")"
+build_dir="$repo_root/$build_dir_rel"
+run_dir="$repo_root/$run_dir_rel"
+result_dir="$repo_root/$result_dir_rel"
+crash_dir="$repo_root/$crash_dir_rel"
+timeout_seconds="${PQCFUZZ_TIMEOUT_SECONDS:-30}"
+rss_mb="${PQCFUZZ_RSS_MB:-2048}"
 
 binary_path="$build_dir/fuzzer"
 if [[ ! -x "$binary_path" ]]; then
@@ -55,10 +68,16 @@ fi
 
 mkdir -p "$run_dir/corpus" "$result_dir" "$crash_dir"
 log_file="$run_dir/run.log"
-seed_input="$run_dir/corpus/seed-kpke-input"
+seed_input="$run_dir/corpus/seed-pqcfuzz-input"
 
 if [[ ! -f "$seed_input" ]]; then
-  printf '\x00\x00\x00\x00\x00' >"$seed_input"
+  seed_source="tests/seeds/mlkem_roundtrip_seed.bin"
+  if [[ "$algorithm_family" == "ML-DSA" ]]; then
+    seed_source="tests/seeds/mldsa_sign_verify_seed.bin"
+  elif [[ "$algorithm_family" == "SLH-DSA" ]]; then
+    seed_source="tests/seeds/slhdsa_sign_verify_seed.bin"
+  fi
+  cp "$seed_source" "$seed_input"
 fi
 
 fuzzer_args=(

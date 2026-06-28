@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pqcfuzz.local/schemas/generated_config.schema.json",
+  "type": "object",
+  "required": [
+    "version",
+    "job_id",
+    "pair_id",
+    "algorithm",
+    "primitive_type",
+    "algorithm_metadata",
+    "pair",
+    "oracles",
+    "paths"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "job_id": {
+      "type": "string"
+    },
+    "pair_id": {
+      "type": "string"
+    },
+    "algorithm": {
+      "type": "string"
+    },
+    "primitive_type": {
+      "enum": [
+        "kem",
+        "sig"
+      ]
+    },
+    "algorithm_metadata": {
+      "type": "object"
+    },
+    "pair": {
+      "type": "object"
+    },
+    "oracles": {
+      "type": "array"
+    },
+    "paths": {
+      "type": "object"
+    }
+  }
+}

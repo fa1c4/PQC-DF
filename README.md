@@ -1,61 +1,97 @@
-# PQ-CDF
+# PQCFuzz
 
-PQ-CDF is a framework for post-quantum crypto differential fuzzing built around three explicit layers:
+PQCFuzz is a framework for post-quantum crypto differential fuzzing. The active
+FIPS 203/204/205 implementation lives under:
 
-1. Operation-level mapping
-2. Flow-level pairing
-3. Self-sufficient job generation
+```text
+/src
+```
 
-The repository is structured to keep source-of-truth contracts separate from runtime artifacts, use stock libFuzzer, and generate one fuzzer binary per flow pair.
+The current active scope is ML-KEM, ML-DSA, and SLH-DSA external-API
+differential fuzzing for:
 
-## Status
+- ML-KEM-512
+- ML-KEM-768
+- ML-KEM-1024
+- ML-DSA-44
+- ML-DSA-65
+- ML-DSA-87
+- SLH-DSA-SHA2-128s
+- SLH-DSA-SHAKE-128s
+- SLH-DSA-SHA2-128f
+- SLH-DSA-SHAKE-128f
+- SLH-DSA-SHA2-192s
+- SLH-DSA-SHAKE-192s
+- SLH-DSA-SHA2-192f
+- SLH-DSA-SHAKE-192f
+- SLH-DSA-SHA2-256s
+- SLH-DSA-SHAKE-256s
+- SLH-DSA-SHA2-256f
+- SLH-DSA-SHAKE-256f
 
-This repository now includes the architecture scaffold plus the first working pipeline for:
+The active path uses externally supplied implementation-pair metadata. It does
+not infer whether projects share provenance or are independently maintained.
 
-- manual operation mapping normalization
-- flow-level bundle pairing
-- self-sufficient fuzzer job generation
-- runtime-generated harness and config emission under `workspace/tmp/<job_id>/`
+## Quickstart
 
-Adapter implementations, semantic oracle execution, native compilation, fuzz runs, and replay/finding recording are scaffolded but not implemented yet.
+Validate the default explicit pair file:
+
+```bash
+python3 src/pairing/validate_pair_alg.py \
+  --pair-alg src/config/pair_alg.default.json
+```
+
+Generate ML-KEM jobs:
+
+```bash
+python3 src/jobs/generate_jobs.py \
+  --pair-alg src/config/pair_alg.default.json \
+  --algorithm-family ML-KEM
+```
+
+Generate ML-DSA jobs:
+
+```bash
+python3 src/jobs/generate_jobs.py \
+  --pair-alg src/config/pair_alg.default.json \
+  --algorithm-family ML-DSA
+```
+
+Generate SLH-DSA jobs:
+
+```bash
+python3 src/jobs/generate_jobs.py \
+  --pair-alg src/config/pair_alg.default.json \
+  --algorithm-family SLH-DSA
+```
+
+Replay one structured seed:
+
+```bash
+python3 src/replay/replay_one.py \
+  --job workspace/jobs/job_mlkem768_liboqs_vs_pqclean.json \
+  --input tests/seeds/mlkem_roundtrip_seed.bin
+```
 
 ## Layout
 
 ```text
-/src/design_implementation_mapper
-/src/pairing_differential_targets
-/src/differential_fuzzer
+/src
 /baselines
 /eval
 /projects
 /workspace
 ```
 
-## Quickstart
+The active implementation is flattened directly under `src/`; the older
+mapper/pairing/fuzzer scaffold has been removed.
 
-Generate normalized mappings:
+## Baseline Fuzzers
 
-```bash
-python3 src/design_implementation_mapper/mapper.py
-```
+PQCFuzz vendors several external baseline fuzzers under `baselines/`.
 
-Generate flow pairs:
-
-```bash
-python3 src/pairing_differential_targets/pairing.py
-```
-
-Generate job records and runtime harness/config artifacts:
-
-```bash
-python3 src/differential_fuzzer/diff_fuzzer.py
-```
-
-## Baseline fuzzers
-
-PQC-DF vendors several external baseline fuzzers under `baselines/`.
-
-They are tracked as ordinary source directories, not as Git submodules. The nested upstream `.git` directories are removed.
+They are tracked as ordinary source directories, not as Git submodules. The
+nested upstream `.git` directories are removed.
 
 Use the dispatcher to build and run them:
 
@@ -83,17 +119,10 @@ workspace/<baseline>/targets-build/
 workspace/<baseline>/targets-run/
 ```
 
-## Current scope
-
-- Projects: `liboqs`, `PQClean`
-- Families: `ML-KEM`, `ML-DSA`
-- Primitive types: `kem`, `sig`
-- Pairing policy: exact complete bundles only
-- Runtime artifacts: isolated by `job_id`
-
 ## Notes
 
 - `projects/` is reserved for upstream source trees only.
 - `workspace/` is reserved for runtime outputs only.
-- Checked-in templates live under `src/differential_fuzzer/templates/`.
-- Generated harnesses never live in source-of-truth directories.
+- Checked-in active PQCFuzz code lives under `src/`.
+- Generated jobs, configs, traces, findings, and PoCs never live in
+  source-of-truth directories.

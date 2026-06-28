@@ -1,0 +1,11 @@
+{
+  "magic": "PQCF",
+  "version": 1,
+  "algorithm": "ML-KEM-768",
+  "oracle_id": "mlkem_local_roundtrip",
+  "flags": 0,
+  "seed_b64": "cHFjZnV6ei1tbGtlbS1yb3VuZHRyaXAtc2VlZA==",
+  "msg_b64": "",
+  "mutation_b64": "",
+  "extra_b64": ""
+}

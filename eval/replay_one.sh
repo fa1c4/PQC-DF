@@ -6,5 +6,7 @@ if [[ $# -ne 2 ]]; then
   exit 1
 fi
 
-echo "replay_one.sh is scaffolded for job '$1' with input '$2', but replay is not implemented yet."
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
 
+python3 src/replay/replay_one.py --job "workspace/jobs/$1.json" --input "$2"

@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pqcfuzz.local/schemas/pair_alg.schema.json",
+  "type": "object",
+  "required": [
+    "version",
+    "pairs"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "algorithms": {
+      "type": "object"
+    },
+    "pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "pair_id",
+          "algorithm",
+          "primitive_type",
+          "left",
+          "right",
+          "exchange_contract",
+          "provenance_relation",
+          "status"
+        ],
+        "properties": {
+          "pair_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "algorithm": {
+            "enum": [
+              "ML-KEM-512",
+              "ML-KEM-768",
+              "ML-KEM-1024",
+              "ML-DSA-44",
+              "ML-DSA-65",
+              "ML-DSA-87",
+              "SLH-DSA-SHA2-128s",
+              "SLH-DSA-SHAKE-128s",
+              "SLH-DSA-SHA2-128f",
+              "SLH-DSA-SHAKE-128f",
+              "SLH-DSA-SHA2-192s",
+              "SLH-DSA-SHAKE-192s",
+              "SLH-DSA-SHA2-192f",
+              "SLH-DSA-SHAKE-192f",
+              "SLH-DSA-SHA2-256s",
+              "SLH-DSA-SHAKE-256s",
+              "SLH-DSA-SHA2-256f",
+              "SLH-DSA-SHAKE-256f"
+            ]
+          },
+          "primitive_type": {
+            "enum": [
+              "kem",
+              "sig"
+            ]
+          },
+          "left": {
+            "$ref": "#/$defs/implementation"
+          },
+          "right": {
+            "$ref": "#/$defs/implementation"
+          },
+          "exchange_contract": {
+            "$ref": "#/$defs/exchange_contract"
+          },
+          "provenance_relation": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "enabled",
+              "disabled"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "implementation": {
+      "type": "object",
+      "required": [
+        "project_id",
+        "implementation_id",
+        "api_names",
+        "abi"
+      ],
+      "properties": {
+        "project_id": {
+          "type": "string"
+        },
+        "project_name": {
+          "type": "string"
+        },
+        "implementation_id": {
+          "type": "string"
+        },
+        "api_names": {
+          "type": "object",
+          "required": [
+            "keygen"
+          ],
+          "properties": {
+            "keygen": {
+              "type": "string"
+            },
+            "encaps": {
+              "type": "string"
+            },
+            "decaps": {
+              "type": "string"
+            },
+            "sign": {
+              "type": "string"
+            },
+            "verify": {
+              "type": "string"
+            },
+            "sign_seeded": {
+              "type": "string"
+            }
+          }
+        },
+        "abi": {
+          "$ref": "#/$defs/abi"
+        }
+      }
+    },
+    "abi": {
+      "type": "object",
+      "required": [
+        "pk_len",
+        "sk_len"
+      ],
+      "properties": {
+        "pk_len": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sk_len": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ct_len": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ss_len": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sig_max_len": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "exchange_contract": {
+      "type": "object",
+      "required": [
+        "public_key_exchange"
+      ],
+      "properties": {
+        "public_key_exchange": {
+          "type": "boolean"
+        },
+        "ciphertext_exchange": {
+          "type": "boolean"
+        },
+        "secret_key_exchange": {
+          "type": "boolean"
+        },
+        "signature_exchange": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

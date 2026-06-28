@@ -1,0 +1,622 @@
+{
+  "version": 1,
+  "algorithms": {
+    "ML-KEM-512": {
+      "family": "ML-KEM",
+      "primitive_type": "kem",
+      "pk_len": 800,
+      "sk_len": 1632,
+      "ct_len": 768,
+      "ss_len": 32,
+      "k": 2,
+      "du": 10,
+      "dv": 4
+    },
+    "ML-KEM-768": {
+      "family": "ML-KEM",
+      "primitive_type": "kem",
+      "pk_len": 1184,
+      "sk_len": 2400,
+      "ct_len": 1088,
+      "ss_len": 32,
+      "k": 3,
+      "du": 10,
+      "dv": 4
+    },
+    "ML-KEM-1024": {
+      "family": "ML-KEM",
+      "primitive_type": "kem",
+      "pk_len": 1568,
+      "sk_len": 3168,
+      "ct_len": 1568,
+      "ss_len": 32,
+      "k": 4,
+      "du": 11,
+      "dv": 5
+    },
+    "ML-DSA-44": {
+      "family": "ML-DSA",
+      "primitive_type": "sig",
+      "pk_len": 1312,
+      "sk_len": 2560,
+      "sig_max_len": 2420
+    },
+    "ML-DSA-65": {
+      "family": "ML-DSA",
+      "primitive_type": "sig",
+      "pk_len": 1952,
+      "sk_len": 4032,
+      "sig_max_len": 3309
+    },
+    "ML-DSA-87": {
+      "family": "ML-DSA",
+      "primitive_type": "sig",
+      "pk_len": 2592,
+      "sk_len": 4896,
+      "sig_max_len": 4627
+    },
+    "SLH-DSA-SHA2-128s": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 16,
+      "pk_len": 32,
+      "sk_len": 64,
+      "sig_max_len": 7856,
+      "h": 63,
+      "d": 7,
+      "hp": 9,
+      "a": 12,
+      "k": 14
+    },
+    "SLH-DSA-SHAKE-128s": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 16,
+      "pk_len": 32,
+      "sk_len": 64,
+      "sig_max_len": 7856,
+      "h": 63,
+      "d": 7,
+      "hp": 9,
+      "a": 12,
+      "k": 14
+    },
+    "SLH-DSA-SHA2-128f": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 16,
+      "pk_len": 32,
+      "sk_len": 64,
+      "sig_max_len": 17088,
+      "h": 66,
+      "d": 22,
+      "hp": 3,
+      "a": 6,
+      "k": 33
+    },
+    "SLH-DSA-SHAKE-128f": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 16,
+      "pk_len": 32,
+      "sk_len": 64,
+      "sig_max_len": 17088,
+      "h": 66,
+      "d": 22,
+      "hp": 3,
+      "a": 6,
+      "k": 33
+    },
+    "SLH-DSA-SHA2-192s": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 24,
+      "pk_len": 48,
+      "sk_len": 96,
+      "sig_max_len": 16224,
+      "h": 63,
+      "d": 7,
+      "hp": 9,
+      "a": 14,
+      "k": 17
+    },
+    "SLH-DSA-SHAKE-192s": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 24,
+      "pk_len": 48,
+      "sk_len": 96,
+      "sig_max_len": 16224,
+      "h": 63,
+      "d": 7,
+      "hp": 9,
+      "a": 14,
+      "k": 17
+    },
+    "SLH-DSA-SHA2-192f": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 24,
+      "pk_len": 48,
+      "sk_len": 96,
+      "sig_max_len": 35664,
+      "h": 66,
+      "d": 22,
+      "hp": 3,
+      "a": 8,
+      "k": 33
+    },
+    "SLH-DSA-SHAKE-192f": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 24,
+      "pk_len": 48,
+      "sk_len": 96,
+      "sig_max_len": 35664,
+      "h": 66,
+      "d": 22,
+      "hp": 3,
+      "a": 8,
+      "k": 33
+    },
+    "SLH-DSA-SHA2-256s": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 32,
+      "pk_len": 64,
+      "sk_len": 128,
+      "sig_max_len": 29792,
+      "h": 64,
+      "d": 8,
+      "hp": 8,
+      "a": 14,
+      "k": 22
+    },
+    "SLH-DSA-SHAKE-256s": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 32,
+      "pk_len": 64,
+      "sk_len": 128,
+      "sig_max_len": 29792,
+      "h": 64,
+      "d": 8,
+      "hp": 8,
+      "a": 14,
+      "k": 22
+    },
+    "SLH-DSA-SHA2-256f": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 32,
+      "pk_len": 64,
+      "sk_len": 128,
+      "sig_max_len": 49856,
+      "h": 68,
+      "d": 17,
+      "hp": 4,
+      "a": 9,
+      "k": 35
+    },
+    "SLH-DSA-SHAKE-256f": {
+      "family": "SLH-DSA",
+      "primitive_type": "sig",
+      "n": 32,
+      "pk_len": 64,
+      "sk_len": 128,
+      "sig_max_len": 49856,
+      "h": 68,
+      "d": 17,
+      "hp": 4,
+      "a": 9,
+      "k": 35
+    }
+  },
+  "pairs": [
+    {
+      "pair_id": "mlkem512_liboqs_vs_pqclean",
+      "algorithm": "ML-KEM-512",
+      "primitive_type": "kem",
+      "left": {
+        "project_id": "liboqs",
+        "project_name": "liboqs",
+        "implementation_id": "liboqs_mlkem512_wrapper_generic",
+        "api_names": {
+          "keygen": "OQS_KEM_ml_kem_512_keypair",
+          "encaps": "OQS_KEM_ml_kem_512_encaps",
+          "decaps": "OQS_KEM_ml_kem_512_decaps"
+        },
+        "abi": {
+          "pk_len": 800,
+          "sk_len": 1632,
+          "ct_len": 768,
+          "ss_len": 32
+        }
+      },
+      "right": {
+        "project_id": "pqclean",
+        "project_name": "PQClean",
+        "implementation_id": "pqclean_mlkem512_clean",
+        "api_names": {
+          "keygen": "PQCLEAN_MLKEM512_CLEAN_crypto_kem_keypair",
+          "encaps": "PQCLEAN_MLKEM512_CLEAN_crypto_kem_enc",
+          "decaps": "PQCLEAN_MLKEM512_CLEAN_crypto_kem_dec"
+        },
+        "abi": {
+          "pk_len": 800,
+          "sk_len": 1632,
+          "ct_len": 768,
+          "ss_len": 32
+        }
+      },
+      "exchange_contract": {
+        "public_key_exchange": true,
+        "ciphertext_exchange": true,
+        "secret_key_exchange": true
+      },
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "mlkem768_liboqs_vs_pqclean",
+      "algorithm": "ML-KEM-768",
+      "primitive_type": "kem",
+      "left": {
+        "project_id": "liboqs",
+        "project_name": "liboqs",
+        "implementation_id": "liboqs_mlkem768_wrapper_generic",
+        "api_names": {
+          "keygen": "OQS_KEM_ml_kem_768_keypair",
+          "encaps": "OQS_KEM_ml_kem_768_encaps",
+          "decaps": "OQS_KEM_ml_kem_768_decaps"
+        },
+        "abi": {
+          "pk_len": 1184,
+          "sk_len": 2400,
+          "ct_len": 1088,
+          "ss_len": 32
+        }
+      },
+      "right": {
+        "project_id": "pqclean",
+        "project_name": "PQClean",
+        "implementation_id": "pqclean_mlkem768_clean",
+        "api_names": {
+          "keygen": "PQCLEAN_MLKEM768_CLEAN_crypto_kem_keypair",
+          "encaps": "PQCLEAN_MLKEM768_CLEAN_crypto_kem_enc",
+          "decaps": "PQCLEAN_MLKEM768_CLEAN_crypto_kem_dec"
+        },
+        "abi": {
+          "pk_len": 1184,
+          "sk_len": 2400,
+          "ct_len": 1088,
+          "ss_len": 32
+        }
+      },
+      "exchange_contract": {
+        "public_key_exchange": true,
+        "ciphertext_exchange": true,
+        "secret_key_exchange": true
+      },
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "mlkem1024_liboqs_vs_pqclean",
+      "algorithm": "ML-KEM-1024",
+      "primitive_type": "kem",
+      "left": {
+        "project_id": "liboqs",
+        "project_name": "liboqs",
+        "implementation_id": "liboqs_mlkem1024_wrapper_generic",
+        "api_names": {
+          "keygen": "OQS_KEM_ml_kem_1024_keypair",
+          "encaps": "OQS_KEM_ml_kem_1024_encaps",
+          "decaps": "OQS_KEM_ml_kem_1024_decaps"
+        },
+        "abi": {
+          "pk_len": 1568,
+          "sk_len": 3168,
+          "ct_len": 1568,
+          "ss_len": 32
+        }
+      },
+      "right": {
+        "project_id": "pqclean",
+        "project_name": "PQClean",
+        "implementation_id": "pqclean_mlkem1024_clean",
+        "api_names": {
+          "keygen": "PQCLEAN_MLKEM1024_CLEAN_crypto_kem_keypair",
+          "encaps": "PQCLEAN_MLKEM1024_CLEAN_crypto_kem_enc",
+          "decaps": "PQCLEAN_MLKEM1024_CLEAN_crypto_kem_dec"
+        },
+        "abi": {
+          "pk_len": 1568,
+          "sk_len": 3168,
+          "ct_len": 1568,
+          "ss_len": 32
+        }
+      },
+      "exchange_contract": {
+        "public_key_exchange": true,
+        "ciphertext_exchange": true,
+        "secret_key_exchange": true
+      },
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "mldsa44_liboqs_vs_pqclean",
+      "algorithm": "ML-DSA-44",
+      "primitive_type": "sig",
+      "left": {
+        "project_id": "liboqs",
+        "project_name": "liboqs",
+        "implementation_id": "liboqs_mldsa44_wrapper_generic",
+        "api_names": {
+          "keygen": "OQS_SIG_ml_dsa_44_keypair",
+          "sign": "OQS_SIG_ml_dsa_44_sign",
+          "verify": "OQS_SIG_ml_dsa_44_verify"
+        },
+        "abi": {
+          "pk_len": 1312,
+          "sk_len": 2560,
+          "sig_max_len": 2420
+        },
+        "capabilities": {
+          "supports_context": false,
+          "supports_seeded_sign": false,
+          "supports_deterministic_sign": false
+        }
+      },
+      "right": {
+        "project_id": "pqclean",
+        "project_name": "PQClean",
+        "implementation_id": "pqclean_mldsa44_clean",
+        "api_names": {
+          "keygen": "PQCLEAN_MLDSA44_CLEAN_crypto_sign_keypair",
+          "sign": "PQCLEAN_MLDSA44_CLEAN_crypto_sign_signature",
+          "verify": "PQCLEAN_MLDSA44_CLEAN_crypto_sign_verify"
+        },
+        "abi": {
+          "pk_len": 1312,
+          "sk_len": 2560,
+          "sig_max_len": 2420
+        },
+        "capabilities": {
+          "supports_context": false,
+          "supports_seeded_sign": false,
+          "supports_deterministic_sign": false
+        }
+      },
+      "exchange_contract": {
+        "public_key_exchange": true,
+        "signature_exchange": true
+      },
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "mldsa65_liboqs_vs_pqclean",
+      "algorithm": "ML-DSA-65",
+      "primitive_type": "sig",
+      "left": {
+        "project_id": "liboqs",
+        "project_name": "liboqs",
+        "implementation_id": "liboqs_mldsa65_wrapper_generic",
+        "api_names": {
+          "keygen": "OQS_SIG_ml_dsa_65_keypair",
+          "sign": "OQS_SIG_ml_dsa_65_sign",
+          "verify": "OQS_SIG_ml_dsa_65_verify"
+        },
+        "abi": {
+          "pk_len": 1952,
+          "sk_len": 4032,
+          "sig_max_len": 3309
+        },
+        "capabilities": {
+          "supports_context": false,
+          "supports_seeded_sign": false,
+          "supports_deterministic_sign": false
+        }
+      },
+      "right": {
+        "project_id": "pqclean",
+        "project_name": "PQClean",
+        "implementation_id": "pqclean_mldsa65_clean",
+        "api_names": {
+          "keygen": "PQCLEAN_MLDSA65_CLEAN_crypto_sign_keypair",
+          "sign": "PQCLEAN_MLDSA65_CLEAN_crypto_sign_signature",
+          "verify": "PQCLEAN_MLDSA65_CLEAN_crypto_sign_verify"
+        },
+        "abi": {
+          "pk_len": 1952,
+          "sk_len": 4032,
+          "sig_max_len": 3309
+        },
+        "capabilities": {
+          "supports_context": false,
+          "supports_seeded_sign": false,
+          "supports_deterministic_sign": false
+        }
+      },
+      "exchange_contract": {
+        "public_key_exchange": true,
+        "signature_exchange": true
+      },
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "mldsa87_liboqs_vs_pqclean",
+      "algorithm": "ML-DSA-87",
+      "primitive_type": "sig",
+      "left": {
+        "project_id": "liboqs",
+        "project_name": "liboqs",
+        "implementation_id": "liboqs_mldsa87_wrapper_generic",
+        "api_names": {
+          "keygen": "OQS_SIG_ml_dsa_87_keypair",
+          "sign": "OQS_SIG_ml_dsa_87_sign",
+          "verify": "OQS_SIG_ml_dsa_87_verify"
+        },
+        "abi": {
+          "pk_len": 2592,
+          "sk_len": 4896,
+          "sig_max_len": 4627
+        },
+        "capabilities": {
+          "supports_context": false,
+          "supports_seeded_sign": false,
+          "supports_deterministic_sign": false
+        }
+      },
+      "right": {
+        "project_id": "pqclean",
+        "project_name": "PQClean",
+        "implementation_id": "pqclean_mldsa87_clean",
+        "api_names": {
+          "keygen": "PQCLEAN_MLDSA87_CLEAN_crypto_sign_keypair",
+          "sign": "PQCLEAN_MLDSA87_CLEAN_crypto_sign_signature",
+          "verify": "PQCLEAN_MLDSA87_CLEAN_crypto_sign_verify"
+        },
+        "abi": {
+          "pk_len": 2592,
+          "sk_len": 4896,
+          "sig_max_len": 4627
+        },
+        "capabilities": {
+          "supports_context": false,
+          "supports_seeded_sign": false,
+          "supports_deterministic_sign": false
+        }
+      },
+      "exchange_contract": {
+        "public_key_exchange": true,
+        "signature_exchange": true
+      },
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_sha2_128s_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHA2-128s",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_sha2_128s_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_sha2_128s_keypair", "sign": "OQS_SIG_slh_dsa_sha2_128s_sign", "verify": "OQS_SIG_slh_dsa_sha2_128s_verify"}, "abi": {"pk_len": 32, "sk_len": 64, "sig_max_len": 7856}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_sha2_128s_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHA2128S_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHA2128S_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHA2128S_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 32, "sk_len": 64, "sig_max_len": 7856}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_shake_128s_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHAKE-128s",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_shake_128s_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_shake_128s_keypair", "sign": "OQS_SIG_slh_dsa_shake_128s_sign", "verify": "OQS_SIG_slh_dsa_shake_128s_verify"}, "abi": {"pk_len": 32, "sk_len": 64, "sig_max_len": 7856}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_shake_128s_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHAKE128S_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHAKE128S_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHAKE128S_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 32, "sk_len": 64, "sig_max_len": 7856}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_sha2_128f_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHA2-128f",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_sha2_128f_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_sha2_128f_keypair", "sign": "OQS_SIG_slh_dsa_sha2_128f_sign", "verify": "OQS_SIG_slh_dsa_sha2_128f_verify"}, "abi": {"pk_len": 32, "sk_len": 64, "sig_max_len": 17088}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_sha2_128f_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHA2128F_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHA2128F_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHA2128F_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 32, "sk_len": 64, "sig_max_len": 17088}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_shake_128f_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHAKE-128f",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_shake_128f_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_shake_128f_keypair", "sign": "OQS_SIG_slh_dsa_shake_128f_sign", "verify": "OQS_SIG_slh_dsa_shake_128f_verify"}, "abi": {"pk_len": 32, "sk_len": 64, "sig_max_len": 17088}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_shake_128f_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHAKE128F_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHAKE128F_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHAKE128F_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 32, "sk_len": 64, "sig_max_len": 17088}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_sha2_192s_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHA2-192s",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_sha2_192s_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_sha2_192s_keypair", "sign": "OQS_SIG_slh_dsa_sha2_192s_sign", "verify": "OQS_SIG_slh_dsa_sha2_192s_verify"}, "abi": {"pk_len": 48, "sk_len": 96, "sig_max_len": 16224}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_sha2_192s_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHA2192S_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHA2192S_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHA2192S_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 48, "sk_len": 96, "sig_max_len": 16224}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_shake_192s_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHAKE-192s",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_shake_192s_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_shake_192s_keypair", "sign": "OQS_SIG_slh_dsa_shake_192s_sign", "verify": "OQS_SIG_slh_dsa_shake_192s_verify"}, "abi": {"pk_len": 48, "sk_len": 96, "sig_max_len": 16224}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_shake_192s_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHAKE192S_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHAKE192S_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHAKE192S_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 48, "sk_len": 96, "sig_max_len": 16224}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_sha2_192f_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHA2-192f",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_sha2_192f_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_sha2_192f_keypair", "sign": "OQS_SIG_slh_dsa_sha2_192f_sign", "verify": "OQS_SIG_slh_dsa_sha2_192f_verify"}, "abi": {"pk_len": 48, "sk_len": 96, "sig_max_len": 35664}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_sha2_192f_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHA2192F_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHA2192F_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHA2192F_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 48, "sk_len": 96, "sig_max_len": 35664}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_shake_192f_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHAKE-192f",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_shake_192f_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_shake_192f_keypair", "sign": "OQS_SIG_slh_dsa_shake_192f_sign", "verify": "OQS_SIG_slh_dsa_shake_192f_verify"}, "abi": {"pk_len": 48, "sk_len": 96, "sig_max_len": 35664}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_shake_192f_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHAKE192F_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHAKE192F_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHAKE192F_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 48, "sk_len": 96, "sig_max_len": 35664}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_sha2_256s_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHA2-256s",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_sha2_256s_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_sha2_256s_keypair", "sign": "OQS_SIG_slh_dsa_sha2_256s_sign", "verify": "OQS_SIG_slh_dsa_sha2_256s_verify"}, "abi": {"pk_len": 64, "sk_len": 128, "sig_max_len": 29792}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_sha2_256s_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHA2256S_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHA2256S_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHA2256S_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 64, "sk_len": 128, "sig_max_len": 29792}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_shake_256s_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHAKE-256s",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_shake_256s_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_shake_256s_keypair", "sign": "OQS_SIG_slh_dsa_shake_256s_sign", "verify": "OQS_SIG_slh_dsa_shake_256s_verify"}, "abi": {"pk_len": 64, "sk_len": 128, "sig_max_len": 29792}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_shake_256s_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHAKE256S_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHAKE256S_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHAKE256S_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 64, "sk_len": 128, "sig_max_len": 29792}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_sha2_256f_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHA2-256f",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_sha2_256f_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_sha2_256f_keypair", "sign": "OQS_SIG_slh_dsa_sha2_256f_sign", "verify": "OQS_SIG_slh_dsa_sha2_256f_verify"}, "abi": {"pk_len": 64, "sk_len": 128, "sig_max_len": 49856}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_sha2_256f_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHA2256F_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHA2256F_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHA2256F_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 64, "sk_len": 128, "sig_max_len": 49856}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    },
+    {
+      "pair_id": "slhdsa_shake_256f_liboqs_vs_pqclean",
+      "algorithm": "SLH-DSA-SHAKE-256f",
+      "primitive_type": "sig",
+      "left": {"project_id": "liboqs", "project_name": "liboqs", "implementation_id": "liboqs_slhdsa_shake_256f_wrapper_generic", "api_names": {"keygen": "OQS_SIG_slh_dsa_shake_256f_keypair", "sign": "OQS_SIG_slh_dsa_shake_256f_sign", "verify": "OQS_SIG_slh_dsa_shake_256f_verify"}, "abi": {"pk_len": 64, "sk_len": 128, "sig_max_len": 49856}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "right": {"project_id": "pqclean", "project_name": "PQClean", "implementation_id": "pqclean_slhdsa_shake_256f_clean", "api_names": {"keygen": "PQCLEAN_SLHDSASHAKE256F_CLEAN_crypto_sign_keypair", "sign": "PQCLEAN_SLHDSASHAKE256F_CLEAN_crypto_sign_signature", "verify": "PQCLEAN_SLHDSASHAKE256F_CLEAN_crypto_sign_verify"}, "abi": {"pk_len": 64, "sk_len": 128, "sig_max_len": 49856}, "capabilities": {"supports_context": false, "supports_seeded_sign": false, "supports_deterministic_sign": false}},
+      "exchange_contract": {"public_key_exchange": true, "signature_exchange": true},
+      "provenance_relation": "provided-by-pair-alg-json",
+      "status": "enabled"
+    }
+  ]
+}
