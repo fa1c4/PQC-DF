@@ -13,6 +13,7 @@ struct FindingArtifactInput {
   std::string job_id;
   std::string pair_id;
   std::string algorithm;
+  std::string primitive;
   std::string oracle_id;
   std::string result_dir;
   std::string generated_config_json;

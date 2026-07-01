@@ -270,6 +270,20 @@ void FinalizeTrace(
   }
 }
 
+void FinalizeSetupFailure(
+    KEMOracleTrace *trace,
+    OracleSubtestTrace *subtest,
+    const Observation &setup_failure,
+    const std::string &note) {
+  trace->observed_relation = "OBSERVED_SETUP_FAILED";
+  trace->baseline = ToObservationTrace(setup_failure);
+  trace->mutated = ToObservationTrace(setup_failure);
+  subtest->skipped = true;
+  subtest->passed = true;
+  subtest->note = note;
+  trace->subtests.push_back(*subtest);
+}
+
 OracleSubtestTrace MakeSubtest(const MetamorphicSpec &spec) {
   OracleSubtestTrace subtest;
   subtest.subtest_id = spec.oracle_id;
@@ -299,6 +313,10 @@ KEMOracleTrace ExecuteMetamorphicKemOracle(const MetamorphicKemConfig &config) {
   OracleSubtestTrace subtest = MakeSubtest(*spec);
   Observation baseline;
   Observation mutated;
+  Observation setup_failure;
+  bool observations_ready = false;
+  bool setup_failed = false;
+  std::string setup_failure_note;
   MutationRecord mutation_record;
   const bool reused_seed = !config.mutation.empty() && (config.mutation[0] & 1u) != 0;
 
@@ -317,6 +335,7 @@ KEMOracleTrace ExecuteMetamorphicKemOracle(const MetamorphicKemConfig &config) {
     }
     baseline = BytesObservation(baseline_keypair.status, PublicAndSecretDigest(baseline_keypair.pk, baseline_keypair.sk));
     mutated = BytesObservation(mutated_keypair.status, PublicAndSecretDigest(mutated_keypair.pk, mutated_keypair.sk));
+    observations_ready = true;
   } else {
     KEMKeyPair keypair = Keygen(config.target, &subtest);
     KEMSharedSecret encaps_ss;
@@ -341,9 +360,27 @@ KEMOracleTrace ExecuteMetamorphicKemOracle(const MetamorphicKemConfig &config) {
         mutated_bytes.insert(mutated_bytes.end(), mutated_ss.ss.begin(), mutated_ss.ss.end());
         baseline = BytesObservation(ciphertext.status, baseline_bytes);
         mutated = BytesObservation(mutated_ct.status, mutated_bytes);
+        observations_ready = true;
       } else {
         ciphertext = Encaps(config.target, keypair.pk, &subtest, &encaps_ss);
+        if (ciphertext.status == PQCFUZZ_API_UNSUPPORTED) {
+          baseline = BytesObservation(ciphertext.status, {});
+          mutated = baseline;
+          observations_ready = true;
+        } else if (ciphertext.status != PQCFUZZ_OK) {
+          setup_failure = BytesObservation(ciphertext.status, {});
+          setup_failure_note = "setup encaps failed";
+          setup_failed = true;
+        }
       }
+    } else if (keypair.status == PQCFUZZ_API_UNSUPPORTED) {
+      baseline = BytesObservation(keypair.status, {});
+      mutated = baseline;
+      observations_ready = true;
+    } else {
+      setup_failure = BytesObservation(keypair.status, {});
+      setup_failure_note = "setup keygen failed";
+      setup_failed = true;
     }
 
     if (config.oracle_id == "kem_encaps_pk" && keypair.status == PQCFUZZ_OK && ciphertext.status == PQCFUZZ_OK) {
@@ -357,6 +394,7 @@ KEMOracleTrace ExecuteMetamorphicKemOracle(const MetamorphicKemConfig &config) {
       mutated_bytes.insert(mutated_bytes.end(), mutated_ss.ss.begin(), mutated_ss.ss.end());
       baseline = BytesObservation(ciphertext.status, baseline_bytes);
       mutated = BytesObservation(mutated_ct.status, mutated_bytes);
+      observations_ready = true;
     } else if (config.oracle_id == "kem_encaps_pk_0" && keypair.status == PQCFUZZ_OK && ciphertext.status == PQCFUZZ_OK) {
       std::vector<uint8_t> zero_pk(keypair.pk.size(), 0);
       mutation_record.operation = "replace_with_all_zero";
@@ -370,6 +408,7 @@ KEMOracleTrace ExecuteMetamorphicKemOracle(const MetamorphicKemConfig &config) {
       mutated_bytes.insert(mutated_bytes.end(), mutated_ss.ss.begin(), mutated_ss.ss.end());
       baseline = BytesObservation(ciphertext.status, baseline_bytes);
       mutated = BytesObservation(mutated_ct.status, mutated_bytes);
+      observations_ready = true;
     } else if (config.oracle_id == "kem_decaps_c" && ciphertext.status == PQCFUZZ_OK) {
       KEMSharedSecret baseline_decaps = Decaps(config.target, ciphertext.ct, keypair.sk, &subtest);
       MaulResult maul = MaulBytes(ciphertext.ct, config.mutation, "ciphertext");
@@ -377,6 +416,7 @@ KEMOracleTrace ExecuteMetamorphicKemOracle(const MetamorphicKemConfig &config) {
       KEMSharedSecret mutated_decaps = Decaps(config.target, maul.mutated, keypair.sk, &subtest);
       baseline = BytesObservation(baseline_decaps.status, baseline_decaps.ss);
       mutated = BytesObservation(mutated_decaps.status, mutated_decaps.ss);
+      observations_ready = true;
     } else if (config.oracle_id == "kem_decaps_sk" && ciphertext.status == PQCFUZZ_OK) {
       KEMSharedSecret baseline_decaps = Decaps(config.target, ciphertext.ct, keypair.sk, &subtest);
       MaulResult maul = MaulBytes(keypair.sk, config.mutation, "secret_key");
@@ -384,12 +424,14 @@ KEMOracleTrace ExecuteMetamorphicKemOracle(const MetamorphicKemConfig &config) {
       KEMSharedSecret mutated_decaps = Decaps(config.target, ciphertext.ct, maul.mutated, &subtest);
       baseline = BytesObservation(baseline_decaps.status, baseline_decaps.ss);
       mutated = BytesObservation(mutated_decaps.status, mutated_decaps.ss);
-    } else if (baseline.status == PQCFUZZ_INVALID_INPUT && mutated.status == PQCFUZZ_INVALID_INPUT) {
-      baseline = BytesObservation(keypair.status == PQCFUZZ_OK ? ciphertext.status : keypair.status, {});
-      mutated = baseline;
+      observations_ready = true;
     }
   }
 
+  if (!observations_ready && setup_failed) {
+    FinalizeSetupFailure(&trace, &subtest, setup_failure, setup_failure_note);
+    return trace;
+  }
   FinalizeTrace(&trace, &subtest, *spec, baseline, mutated, mutation_record.target.empty() ? nullptr : &mutation_record);
   return trace;
 }
@@ -413,6 +455,10 @@ KEMOracleTrace ExecuteMetamorphicSigOracle(const MetamorphicSigConfig &config) {
   OracleSubtestTrace subtest = MakeSubtest(*spec);
   Observation baseline;
   Observation mutated;
+  Observation setup_failure;
+  bool observations_ready = false;
+  bool setup_failed = false;
+  std::string setup_failure_note;
   MutationRecord mutation_record;
   const std::vector<uint8_t> message = config.message.empty()
                                           ? std::vector<uint8_t>{'P', 'Q', 'C', 'F', 'u', 'z', 'z'}
@@ -434,6 +480,7 @@ KEMOracleTrace ExecuteMetamorphicSigOracle(const MetamorphicSigConfig &config) {
     }
     baseline = BytesObservation(baseline_keypair.status, PublicAndSecretDigest(baseline_keypair.pk, baseline_keypair.sk));
     mutated = BytesObservation(mutated_keypair.status, PublicAndSecretDigest(mutated_keypair.pk, mutated_keypair.sk));
+    observations_ready = true;
   } else {
     SIGKeyPair keypair = SigKeygen(config.target, &subtest);
     SIGSignature signature;
@@ -442,6 +489,7 @@ KEMOracleTrace ExecuteMetamorphicSigOracle(const MetamorphicSigConfig &config) {
         if (config.target != nullptr && config.target->supports_deterministic_sign && !config.target->supports_seeded_sign) {
           baseline = BytesObservation(PQCFUZZ_API_UNSUPPORTED, {});
           mutated = baseline;
+          observations_ready = true;
         } else {
           const auto baseline_tape = MakeTape(config.seed, "sig-sign-baseline", false);
           const auto mutated_tape = MakeTape(config.seed, "sig-sign-mutated", !reused_seed);
@@ -456,10 +504,28 @@ KEMOracleTrace ExecuteMetamorphicSigOracle(const MetamorphicSigConfig &config) {
           }
           baseline = BytesObservation(signature.status, signature.sig);
           mutated = BytesObservation(mutated_signature.status, mutated_signature.sig);
+          observations_ready = true;
         }
       } else {
         signature = Sign(config.target, message, config.context, keypair.sk, &subtest);
+        if (signature.status == PQCFUZZ_API_UNSUPPORTED) {
+          baseline = BytesObservation(signature.status, {});
+          mutated = baseline;
+          observations_ready = true;
+        } else if (signature.status != PQCFUZZ_OK) {
+          setup_failure = BytesObservation(signature.status, {});
+          setup_failure_note = "setup sign failed";
+          setup_failed = true;
+        }
       }
+    } else if (keypair.status == PQCFUZZ_API_UNSUPPORTED) {
+      baseline = BytesObservation(keypair.status, {});
+      mutated = baseline;
+      observations_ready = true;
+    } else {
+      setup_failure = BytesObservation(keypair.status, {});
+      setup_failure_note = "setup keygen failed";
+      setup_failed = true;
     }
 
     if (config.oracle_id == "sig_sign_m" && signature.status == PQCFUZZ_OK) {
@@ -468,12 +534,14 @@ KEMOracleTrace ExecuteMetamorphicSigOracle(const MetamorphicSigConfig &config) {
       SIGSignature mutated_signature = Sign(config.target, maul.mutated, config.context, keypair.sk, &subtest);
       baseline = BytesObservation(signature.status, signature.sig);
       mutated = BytesObservation(mutated_signature.status, mutated_signature.sig);
+      observations_ready = true;
     } else if (config.oracle_id == "sig_sign_sk" && signature.status == PQCFUZZ_OK) {
       MaulResult maul = MaulBytes(keypair.sk, config.mutation, "secret_key");
       mutation_record = maul.record;
       SIGSignature mutated_signature = Sign(config.target, message, config.context, maul.mutated, &subtest);
       baseline = BytesObservation(signature.status, signature.sig);
       mutated = BytesObservation(mutated_signature.status, mutated_signature.sig);
+      observations_ready = true;
     } else if (config.oracle_id == "sig_verify_m" && signature.status == PQCFUZZ_OK) {
       SIGVerifyResult baseline_verify = Verify(config.target, signature.sig, message, config.context, keypair.pk, &subtest);
       MaulResult maul = MaulBytes(message, config.mutation, "message");
@@ -481,6 +549,7 @@ KEMOracleTrace ExecuteMetamorphicSigOracle(const MetamorphicSigConfig &config) {
       SIGVerifyResult mutated_verify = Verify(config.target, signature.sig, maul.mutated, config.context, keypair.pk, &subtest);
       baseline = BoolObservation(baseline_verify);
       mutated = BoolObservation(mutated_verify);
+      observations_ready = true;
     } else if (config.oracle_id == "sig_verify_sig" && signature.status == PQCFUZZ_OK) {
       SIGVerifyResult baseline_verify = Verify(config.target, signature.sig, message, config.context, keypair.pk, &subtest);
       MaulResult maul = MaulBytes(signature.sig, config.mutation, "signature");
@@ -488,6 +557,7 @@ KEMOracleTrace ExecuteMetamorphicSigOracle(const MetamorphicSigConfig &config) {
       SIGVerifyResult mutated_verify = Verify(config.target, maul.mutated, message, config.context, keypair.pk, &subtest);
       baseline = BoolObservation(baseline_verify);
       mutated = BoolObservation(mutated_verify);
+      observations_ready = true;
     } else if (config.oracle_id == "sig_verify_pk" && signature.status == PQCFUZZ_OK) {
       SIGVerifyResult baseline_verify = Verify(config.target, signature.sig, message, config.context, keypair.pk, &subtest);
       MaulResult maul = MaulBytes(keypair.pk, config.mutation, "public_key");
@@ -495,12 +565,14 @@ KEMOracleTrace ExecuteMetamorphicSigOracle(const MetamorphicSigConfig &config) {
       SIGVerifyResult mutated_verify = Verify(config.target, signature.sig, message, config.context, maul.mutated, &subtest);
       baseline = BoolObservation(baseline_verify);
       mutated = BoolObservation(mutated_verify);
-    } else if (baseline.status == PQCFUZZ_INVALID_INPUT && mutated.status == PQCFUZZ_INVALID_INPUT) {
-      baseline = BytesObservation(keypair.status == PQCFUZZ_OK ? signature.status : keypair.status, {});
-      mutated = baseline;
+      observations_ready = true;
     }
   }
 
+  if (!observations_ready && setup_failed) {
+    FinalizeSetupFailure(&trace, &subtest, setup_failure, setup_failure_note);
+    return trace;
+  }
   FinalizeTrace(&trace, &subtest, *spec, baseline, mutated, mutation_record.target.empty() ? nullptr : &mutation_record);
   return trace;
 }

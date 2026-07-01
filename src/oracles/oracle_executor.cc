@@ -1,6 +1,7 @@
 #include "oracles/oracle_executor.h"
 
 #include <algorithm>
+#include <iomanip>
 #include <sstream>
 
 #include "adapters/status.h"
@@ -12,13 +13,19 @@ namespace {
 
 std::string JsonEscape(const std::string &value) {
   std::ostringstream out;
-  for (char ch : value) {
+  for (unsigned char ch : value) {
     switch (ch) {
       case '\\':
         out << "\\\\";
         break;
       case '"':
         out << "\\\"";
+        break;
+      case '\b':
+        out << "\\b";
+        break;
+      case '\f':
+        out << "\\f";
         break;
       case '\n':
         out << "\\n";
@@ -30,7 +37,11 @@ std::string JsonEscape(const std::string &value) {
         out << "\\t";
         break;
       default:
-        out << ch;
+        if (ch < 0x20) {
+          out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned>(ch) << std::dec;
+        } else {
+          out << static_cast<char>(ch);
+        }
         break;
     }
   }

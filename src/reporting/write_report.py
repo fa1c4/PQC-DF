@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 from collections import defaultdict
 from pathlib import Path
 from typing import TextIO
@@ -16,11 +17,13 @@ from summarize_findings import (
     SUMMARY_KEY_COLUMNS,
     augment_row_with_trace,
     base_row_from_finding,
+    candidate_result_roots,
     finding_class_from_artifact_name,
     iter_finding_artifact_dirs,
     iter_finding_files,
     load_json,
     primitive_from_path,
+    unique_paths,
     version_from_path,
 )
 
@@ -34,6 +37,26 @@ EXEMPLAR_KEY_COLUMNS = [
     "oracle_id",
     "finding_class",
     "finding_subclass",
+]
+
+COUNTER_ROW_COLUMNS = [
+    "version",
+    "algorithm",
+    "primitive",
+    "oracle_suite",
+    "relation_mode",
+    "oracle_id",
+    "field",
+    "expected_relation",
+    "observed_relation",
+    "finding_class",
+    "finding_subclass",
+    "baseline_status",
+    "mutated_status",
+    "baseline_accepted",
+    "mutated_accepted",
+    "crash_signal",
+    "timeout_seconds",
 ]
 
 
@@ -130,6 +153,17 @@ def sorted_summary_rows(
     ]
 
 
+def sorted_counter_summary_rows(
+    counts: dict[tuple[str, ...], int],
+    exemplars: dict[tuple[str, ...], dict[str, str]],
+    group_keys: dict[tuple[str, ...], str],
+) -> list[dict[str, str]]:
+    return [
+        summary_from_row(exemplars[key], counts[key], "grouped-counter", group_keys.get(key, "|".join(key)))
+        for key in sorted(counts)
+    ]
+
+
 def write_summary_reports(
     summaries: list[dict[str, str]],
     output_root: Path,
@@ -178,11 +212,120 @@ def fast_summary_key(artifact_dir: Path, row: dict[str, str]) -> tuple[str, ...]
     )
 
 
+def counter_files_for_roots(roots: list[Path]) -> list[Path]:
+    files: list[Path] = []
+    seen: set[str] = set()
+    for root in roots:
+        candidates: list[Path] = []
+        if root.is_file() and root.name == "finding_counts.tsv":
+            candidates.append(root)
+        elif root.is_dir():
+            result_roots = unique_paths(candidate_result_roots(root))
+            if not result_roots and root.name in {"kem", "sig"}:
+                result_roots = [root.parent]
+            for result_root in result_roots:
+                for primitive in ("kem", "sig"):
+                    candidates.append(result_root / primitive / "finding_counts.tsv")
+                if result_root.name in {"kem", "sig"}:
+                    candidates.append(result_root / "finding_counts.tsv")
+        for path in candidates:
+            if not path.is_file():
+                continue
+            key = os.path.abspath(os.fspath(path))
+            if key in seen:
+                continue
+            seen.add(key)
+            files.append(path)
+    return files
+
+
+def artifact_dir_from_counter(counter_file: Path, row: dict[str, str]) -> Path:
+    raw = row.get("exemplar_artifact_path") or row.get("artifact_path") or ""
+    if raw:
+        path = Path(raw)
+        if path.is_absolute() or path.exists():
+            return path
+        local = counter_file.parent / path
+        if local.exists():
+            return local
+        return path
+    finding_id = row.get("finding_id") or ""
+    return counter_file.parent / finding_id if finding_id else counter_file.parent
+
+
+def counter_group_key(counter_file: Path, item: dict[str, str], row: dict[str, str]) -> str:
+    group_key = item.get("group_key", "")
+    if group_key:
+        return group_key
+    missing = [column for column in SUMMARY_KEY_COLUMNS if not row.get(column)]
+    if missing:
+        finding_id = item.get("finding_id") or row.get("artifact_path") or counter_file.name
+        return f"malformed-counter:{counter_file}:{finding_id}:missing={','.join(missing)}"
+    return "|".join(summary_key(row))
+
+
+def apply_counter_fields(counter_file: Path, artifact_dir: Path, row: dict[str, str], item: dict[str, str]) -> None:
+    for column in COUNTER_ROW_COLUMNS:
+        if item.get(column) and not row.get(column):
+            row[column] = item[column]
+    if not row.get("version"):
+        row["version"] = item.get("version") or version_from_path(artifact_dir)
+    if not row.get("primitive"):
+        row["primitive"] = item.get("primitive") or primitive_from_path(artifact_dir) or primitive_from_path(counter_file.parent)
+    if not row.get("finding_class"):
+        row["finding_class"] = item.get("finding_class") or finding_class_from_artifact_name(artifact_dir.name) or "malformed_counter"
+    if not row.get("finding_subclass") and row.get("finding_class") == "malformed_counter":
+        row["finding_subclass"] = "missing_counter_fields"
+
+
+def counter_rows(counter_file: Path, trace_mode: str) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    with counter_file.open(encoding="utf-8", newline="") as handle:
+        for item in csv.DictReader(handle, delimiter="\t"):
+            artifact_dir = artifact_dir_from_counter(counter_file, item)
+            row = fast_row_from_artifact_dir(artifact_dir, trace_mode)
+            apply_counter_fields(counter_file, artifact_dir, row, item)
+            if item.get("exemplar_replay_command"):
+                row["replay_command"] = item["exemplar_replay_command"]
+            if item.get("exemplar_artifact_path"):
+                row["artifact_path"] = item["exemplar_artifact_path"]
+            try:
+                count = int(item.get("count", "0"))
+            except ValueError:
+                count = 0
+            if count <= 0:
+                continue
+            rows.append({"row": row, "count": count, "group_key": counter_group_key(counter_file, item, row)})
+    return rows
+
+
+def result_dir_key(path: Path) -> str:
+    return os.path.abspath(os.fspath(path))
+
+
 def write_fast_summary_reports(roots: list[Path], output_root: Path, formats: set[str], trace_mode: str) -> None:
     counts: dict[tuple[str, ...], int] = {}
     exemplars: dict[tuple[str, ...], dict[str, str]] = {}
+    group_keys: dict[tuple[str, ...], str] = {}
+    counter_keys: set[tuple[str, ...]] = set()
+    counter_result_dirs: set[str] = set()
+
+    for counter_file in counter_files_for_roots(roots):
+        counter_result_dirs.add(result_dir_key(counter_file.parent))
+        for item in counter_rows(counter_file, trace_mode):
+            row = item["row"]
+            assert isinstance(row, dict)
+            key = summary_key(row)
+            counter_keys.add(key)
+            counts[key] = counts.get(key, 0) + int(item["count"])
+            exemplars.setdefault(key, row)
+            group_key = str(item.get("group_key") or "")
+            if group_key:
+                group_keys.setdefault(key, group_key)
 
     for artifact_dir in iter_finding_artifact_dirs(roots):
+        if result_dir_key(artifact_dir.parent) in counter_result_dirs:
+            continue
         row = {column: "" for column in REPORT_COLUMNS}
         row["version"] = version_from_path(artifact_dir)
         row["primitive"] = primitive_from_path(artifact_dir)
@@ -192,7 +335,19 @@ def write_fast_summary_reports(roots: list[Path], output_root: Path, formats: se
         if key not in exemplars:
             exemplars[key] = fast_row_from_artifact_dir(artifact_dir, trace_mode)
 
-    write_summary_reports(sorted_summary_rows(counts, exemplars, "fast-directory"), output_root, formats)
+    summaries = sorted_counter_summary_rows(
+        {key: count for key, count in counts.items() if key in counter_keys},
+        {key: row for key, row in exemplars.items() if key in counter_keys},
+        group_keys,
+    )
+    summaries.extend(
+        sorted_summary_rows(
+            {key: count for key, count in counts.items() if key not in counter_keys},
+            {key: row for key, row in exemplars.items() if key not in counter_keys},
+            "fast-directory",
+        )
+    )
+    write_summary_reports(summaries, output_root, formats)
 
 
 def write_reports(

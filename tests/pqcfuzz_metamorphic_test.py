@@ -131,6 +131,93 @@ def test_unsupported_adapter_reports_unsupported(tmp_path: Path) -> None:
     )
 
 
+def test_kem_setup_keygen_failure_is_skipped_not_malleability(tmp_path: Path) -> None:
+    compile_and_run(
+        tmp_path,
+        """
+        #include "oracles/metamorphic_executor.h"
+        extern "C" const pqcfuzz_kem_adapter *pqcfuzz_fake_kem_keygen_fails_adapter();
+        int main() {
+          pqcfuzz::MetamorphicKemConfig cfg;
+          cfg.job_id = "test";
+          cfg.pair_id = "test";
+          cfg.algorithm = "ML-KEM-768";
+          cfg.oracle_id = "kem_decaps_c";
+          cfg.target = pqcfuzz_fake_kem_keygen_fails_adapter();
+          cfg.seed = {1, 2, 3};
+          cfg.mutation = {0, 0, 1};
+          auto trace = pqcfuzz::ExecuteMetamorphicKemOracle(cfg);
+          return trace.findings.empty() &&
+                         trace.observed_relation == "OBSERVED_SETUP_FAILED" &&
+                         !trace.subtests.empty() &&
+                         trace.subtests[0].skipped &&
+                         trace.subtests[0].note == "setup keygen failed"
+                     ? 0
+                     : 1;
+        }
+        """,
+        ["tests/fake_adapters/fake_kem_keygen_fails.cc"],
+    )
+
+
+def test_kem_setup_encaps_failure_is_skipped_not_malleability(tmp_path: Path) -> None:
+    compile_and_run(
+        tmp_path,
+        """
+        #include "oracles/metamorphic_executor.h"
+        extern "C" const pqcfuzz_kem_adapter *pqcfuzz_fake_kem_encaps_fails_adapter();
+        int main() {
+          pqcfuzz::MetamorphicKemConfig cfg;
+          cfg.job_id = "test";
+          cfg.pair_id = "test";
+          cfg.algorithm = "ML-KEM-768";
+          cfg.oracle_id = "kem_decaps_c";
+          cfg.target = pqcfuzz_fake_kem_encaps_fails_adapter();
+          cfg.seed = {1, 2, 3};
+          cfg.mutation = {0, 0, 1};
+          auto trace = pqcfuzz::ExecuteMetamorphicKemOracle(cfg);
+          return trace.findings.empty() &&
+                         trace.observed_relation == "OBSERVED_SETUP_FAILED" &&
+                         !trace.subtests.empty() &&
+                         trace.subtests[0].skipped &&
+                         trace.subtests[0].note == "setup encaps failed"
+                     ? 0
+                     : 1;
+        }
+        """,
+        ["tests/fake_adapters/fake_kem_encaps_fails.cc"],
+    )
+
+
+def test_sig_setup_sign_failure_is_skipped_not_malleability(tmp_path: Path) -> None:
+    compile_and_run(
+        tmp_path,
+        """
+        #include "oracles/metamorphic_executor.h"
+        extern "C" const pqcfuzz_sig_adapter *pqcfuzz_fake_sig_sign_fails_adapter();
+        int main() {
+          pqcfuzz::MetamorphicSigConfig cfg;
+          cfg.job_id = "test";
+          cfg.pair_id = "test";
+          cfg.algorithm = "ML-DSA-44";
+          cfg.oracle_id = "sig_verify_sig";
+          cfg.target = pqcfuzz_fake_sig_sign_fails_adapter();
+          cfg.message = {'m'};
+          cfg.mutation = {0, 0, 1};
+          auto trace = pqcfuzz::ExecuteMetamorphicSigOracle(cfg);
+          return trace.findings.empty() &&
+                         trace.observed_relation == "OBSERVED_SETUP_FAILED" &&
+                         !trace.subtests.empty() &&
+                         trace.subtests[0].skipped &&
+                         trace.subtests[0].note == "setup sign failed"
+                     ? 0
+                     : 1;
+        }
+        """,
+        ["tests/fake_adapters/fake_sig_sign_fails.cc"],
+    )
+
+
 def test_classification_relation_cases() -> None:
     assert classify_trace({"expected_relation": "EXPECT_DIFFERENT", "observed_relation": "OBSERVED_EQUAL", "findings": []}) == "malleability"
     assert classify_trace({"expected_relation": "EXPECT_EQUAL", "observed_relation": "OBSERVED_DIFFERENT", "findings": []}) == "non_malleability"

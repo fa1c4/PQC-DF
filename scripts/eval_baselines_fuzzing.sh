@@ -11,6 +11,8 @@ Options:
                                 Accepts seconds or s/m/h/d suffixes, e.g. 86400, 60m, 24h.
   --progress-interval SECONDS   Seconds between progress reports. Default: 3600.
   --session-prefix NAME         Prefix for tmux session names. Default: pqcdf.
+  --result-save-mode compact|all
+                                Result retention policy. Default: compact.
   --dry-run                     Print the sessions and commands without starting tmux.
   -h, --help                    Show this help.
 
@@ -82,6 +84,7 @@ print_campaign_commands() {
   local seconds="$3"
   local kem_seconds="$4"
   local sig_seconds="$5"
+  local result_save_mode="$6"
 
   echo "scripts/run_baseline.sh $baseline docker-build"
   case "$baseline" in
@@ -101,6 +104,10 @@ print_campaign_commands() {
       die "unknown baseline '$baseline'"
       ;;
   esac
+
+  if [ "$result_save_mode" = "compact" ]; then
+    echo "PQCDF_WORKSPACE_ROOT=<campaign-workspace> python3 scripts/compact_baseline_results.py --workspace-root <campaign-workspace> --baseline $baseline --version $version --mode compact"
+  fi
 }
 
 write_launcher() {
@@ -116,6 +123,7 @@ write_launcher() {
   local seconds="${10}"
   local kem_seconds="${11}"
   local sig_seconds="${12}"
+  local result_save_mode="${13}"
 
   {
     printf '#!/usr/bin/env bash\n'
@@ -131,7 +139,8 @@ write_launcher() {
     printf 'STATUS_FILE=%q\n' "$status_file"
     printf 'FUZZING_SECONDS=%q\n' "$seconds"
     printf 'KEM_SECONDS=%q\n' "$kem_seconds"
-    printf 'SIG_SECONDS=%q\n\n' "$sig_seconds"
+    printf 'SIG_SECONDS=%q\n' "$sig_seconds"
+    printf 'RESULT_SAVE_MODE=%q\n\n' "$result_save_mode"
     cat <<'EOF'
 mkdir -p "$(dirname "$LOG_FILE")" "$(dirname "$STATUS_FILE")" "$WORKSPACE_ROOT_REL"
 : > "$LOG_FILE"
@@ -144,6 +153,9 @@ TARGET_BUILD_STATUS=""
 FUZZ_STATUS=""
 KEM_STATUS=""
 SIG_STATUS=""
+COMPACTION_STATUS=""
+COMPACTION_MANIFEST=""
+COMPACTION_ELIGIBLE=0
 FINAL_STATUS=""
 RESULT=""
 ENDED_AT=""
@@ -170,8 +182,11 @@ write_status() {
   EVAL_FUZZ_STATUS="$FUZZ_STATUS" \
   EVAL_KEM_STATUS="$KEM_STATUS" \
   EVAL_SIG_STATUS="$SIG_STATUS" \
+  EVAL_COMPACTION_STATUS="$COMPACTION_STATUS" \
+  EVAL_COMPACTION_MANIFEST="$COMPACTION_MANIFEST" \
   EVAL_FINAL_STATUS="$FINAL_STATUS" \
   EVAL_RESULT="$RESULT" \
+  EVAL_RESULT_SAVE_MODE="$RESULT_SAVE_MODE" \
   python3 - <<'PY'
 import json
 import os
@@ -218,8 +233,11 @@ doc.update({
     "fuzz_status": int_or_none(os.environ["EVAL_FUZZ_STATUS"]),
     "kem_status": int_or_none(os.environ["EVAL_KEM_STATUS"]),
     "sig_status": int_or_none(os.environ["EVAL_SIG_STATUS"]),
+    "compaction_status": int_or_none(os.environ["EVAL_COMPACTION_STATUS"]),
+    "compaction_manifest": os.environ["EVAL_COMPACTION_MANIFEST"] or None,
     "final_status": int_or_none(os.environ["EVAL_FINAL_STATUS"]),
     "result": os.environ["EVAL_RESULT"] or None,
+    "result_save_mode": os.environ["EVAL_RESULT_SAVE_MODE"],
 })
 if os.environ["EVAL_ENDED_AT"]:
     doc["ended_at"] = os.environ["EVAL_ENDED_AT"]
@@ -235,6 +253,33 @@ PY
 finish_campaign() {
   RESULT="$1"
   FINAL_STATUS="$2"
+
+  if [ "$RESULT_SAVE_MODE" = "compact" ]; then
+    COMPACTION_MANIFEST="${WORKSPACE_ROOT_REL}/${BASELINE}/compaction_manifest.json"
+    if [ "$COMPACTION_ELIGIBLE" = "1" ]; then
+      write_status "compact-results" "running"
+      run_step python3 scripts/compact_baseline_results.py \
+        --workspace-root "$WORKSPACE_ROOT_REL" \
+        --baseline "$BASELINE" \
+        --version "$VERSION" \
+        --mode compact
+    else
+      write_status "compact-results" "skipped"
+      run_step python3 scripts/compact_baseline_results.py \
+        --workspace-root "$WORKSPACE_ROOT_REL" \
+        --baseline "$BASELINE" \
+        --version "$VERSION" \
+        --mode compact \
+        --skip-reason "campaign did not reach result-producing phase"
+    fi
+    COMPACTION_STATUS="$?"
+    echo "[eval] compaction exited with status $COMPACTION_STATUS"
+    if [ "$COMPACTION_STATUS" -ne 0 ] && [ "$FINAL_STATUS" -eq 0 ]; then
+      RESULT="compaction-failed"
+      FINAL_STATUS="$COMPACTION_STATUS"
+    fi
+  fi
+
   ENDED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   write_status "finished" "finished"
   echo
@@ -258,6 +303,7 @@ echo "[eval] campaign: $CAMPAIGN"
 echo "[eval] baseline: $BASELINE"
 echo "[eval] liboqs version: $VERSION"
 echo "[eval] fuzzing time: ${FUZZING_SECONDS}s"
+echo "[eval] result save mode: $RESULT_SAVE_MODE"
 echo "[eval] workspace root: $WORKSPACE_ROOT_REL"
 echo "[eval] started: $STARTED_AT"
 echo "[eval] log: $LOG_FILE"
@@ -292,6 +338,7 @@ esac
 
 case "$BASELINE" in
   libFuzzer)
+    COMPACTION_ELIGIBLE=1
     write_status "run-kem" "running"
     run_step scripts/run_baseline.sh libFuzzer run --version "$VERSION" --target kem --mode full --max-total-time "$KEM_SECONDS"
     KEM_STATUS="$?"
@@ -311,18 +358,21 @@ case "$BASELINE" in
     ;;
 
   cryptofuzz)
+    COMPACTION_ELIGIBLE=1
     write_status "run" "running"
     run_step scripts/run_baseline.sh cryptofuzz run --version "$VERSION" --mode full --max-total-time "$FUZZING_SECONDS"
     FUZZ_STATUS="$?"
     ;;
 
   CLFuzz)
+    COMPACTION_ELIGIBLE=1
     write_status "run" "running"
     run_step scripts/run_baseline.sh CLFuzz run --version "$VERSION" --mode full --max-total-time "$FUZZING_SECONDS"
     FUZZ_STATUS="$?"
     ;;
 
   cryptoTesting)
+    COMPACTION_ELIGIBLE=1
     write_status "run" "running"
     echo "[eval] command: timeout ${FUZZING_SECONDS}s scripts/run_baseline.sh cryptoTesting run --version $VERSION --skip-core-pattern-check"
     timeout "${FUZZING_SECONDS}s" scripts/run_baseline.sh cryptoTesting run --version "$VERSION" --skip-core-pattern-check
@@ -411,7 +461,7 @@ print_progress() {
 }
 
 write_final_summary() {
-  python3 - "$INDEX_FILE" "$SUMMARY_JSON" "$SUMMARY_TSV" "$FUZZING_SECONDS" <<'PY'
+  python3 - "$INDEX_FILE" "$SUMMARY_JSON" "$SUMMARY_TSV" "$FUZZING_SECONDS" "$RESULT_SAVE_MODE" <<'PY'
 import csv
 import json
 import os
@@ -423,6 +473,7 @@ index_file = Path(sys.argv[1])
 summary_json = Path(sys.argv[2])
 summary_tsv = Path(sys.argv[3])
 fuzzing_seconds = int(sys.argv[4])
+result_save_mode = sys.argv[5]
 
 def load_json(path):
     try:
@@ -483,6 +534,14 @@ for campaign in campaigns:
     reports = sorted(rel(path) for path in reports_dir.glob("*") if path.is_file()) if reports_dir.is_dir() else []
     logs = sorted(rel(path) for path in logs_dir.glob("*") if path.is_file()) if logs_dir.is_dir() else []
     counts = artifact_counts(run_root)
+    manifest_path = workspace_root / baseline / "compaction_manifest.json"
+    manifest = load_json(manifest_path) if manifest_path.is_file() else None
+    retained_counts = manifest.get("retained_artifact_counts", {}) if isinstance(manifest, dict) else {}
+    row_result_save_mode = (
+        campaign.get("result_save_mode")
+        or status.get("result_save_mode")
+        or result_save_mode
+    )
 
     final_status = status.get("final_status")
     result = status.get("result") or "missing-status"
@@ -524,12 +583,22 @@ for campaign in campaigns:
         "oom_count": counts["oom"],
         "cryptoTesting_reports": reports,
         "cryptoTesting_logs": logs,
+        "result_save_mode": row_result_save_mode,
+        "compacted": bool(manifest.get("compacted")) if isinstance(manifest, dict) else False,
+        "compaction_status": status.get("compaction_status"),
+        "compaction_manifest": rel(manifest_path) if manifest_path.is_file() else status.get("compaction_manifest"),
+        "removed_bytes_estimate": manifest.get("removed_bytes_estimate", 0) if isinstance(manifest, dict) else 0,
+        "build_retained": manifest.get("build_retained") if isinstance(manifest, dict) else row_result_save_mode == "all",
+        "corpus_retained": manifest.get("corpus_retained") if isinstance(manifest, dict) else row_result_save_mode == "all",
+        "retained_artifact_counts": retained_counts,
+        "hang_count": retained_counts.get("hang", 0),
     }
     rows.append(row)
 
 summary = {
     "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     "fuzzing_seconds": fuzzing_seconds,
+    "result_save_mode": result_save_mode,
     "overall_status": overall_status,
     "campaigns": rows,
 }
@@ -556,6 +625,14 @@ columns = [
     "leak_count",
     "oom_count",
     "log",
+    "result_save_mode",
+    "compacted",
+    "compaction_status",
+    "compaction_manifest",
+    "removed_bytes_estimate",
+    "build_retained",
+    "corpus_retained",
+    "hang_count",
 ]
 with open(summary_tsv, "w", encoding="utf-8", newline="") as f:
     writer = csv.DictWriter(f, delimiter="\t", fieldnames=columns)
@@ -599,6 +676,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FUZZING_TIME="24h"
 PROGRESS_INTERVAL="3600"
 SESSION_PREFIX="pqcdf"
+RESULT_SAVE_MODE="compact"
 DRY_RUN=0
 
 while [ "$#" -gt 0 ]; do
@@ -636,6 +714,17 @@ while [ "$#" -gt 0 ]; do
       SESSION_PREFIX="${1#--session-prefix=}"
       shift
       ;;
+    --result-save-mode)
+      if [ "$#" -lt 2 ]; then
+        die "missing value for --result-save-mode"
+      fi
+      RESULT_SAVE_MODE="$2"
+      shift 2
+      ;;
+    --result-save-mode=*)
+      RESULT_SAVE_MODE="${1#--result-save-mode=}"
+      shift
+      ;;
     --dry-run)
       DRY_RUN=1
       shift
@@ -651,6 +740,12 @@ while [ "$#" -gt 0 ]; do
 done
 
 validate_session_prefix "$SESSION_PREFIX"
+case "$RESULT_SAVE_MODE" in
+  compact|all) ;;
+  *)
+    die "--result-save-mode must be 'compact' or 'all'"
+    ;;
+esac
 FUZZING_SECONDS="$(parse_duration_seconds "$FUZZING_TIME")"
 if [[ ! "$PROGRESS_INTERVAL" =~ ^[0-9]+$ ]] || [ "$PROGRESS_INTERVAL" -le 0 ]; then
   die "--progress-interval must be a positive integer number of seconds"
@@ -713,6 +808,7 @@ echo "[eval] output root: $EVAL_ROOT"
 echo "[eval] fuzzing time: ${FUZZING_SECONDS}s"
 echo "[eval] progress interval: ${PROGRESS_INTERVAL}s"
 echo "[eval] session prefix: $SESSION_PREFIX"
+echo "[eval] result save mode: $RESULT_SAVE_MODE"
 echo "[eval] dry run: $DRY_RUN"
 echo
 
@@ -725,7 +821,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
     echo "[dry-run] workspace: ${WORKSPACE_REL_BY_ID[$campaign]}"
     echo "[dry-run] log: ${LOG_FILE_BY_ID[$campaign]}"
     echo "[dry-run] status: ${STATUS_FILE_BY_ID[$campaign]}"
-    print_campaign_commands "$baseline" "$version" "$FUZZING_SECONDS" "$KEM_SECONDS" "$SIG_SECONDS" |
+    print_campaign_commands "$baseline" "$version" "$FUZZING_SECONDS" "$KEM_SECONDS" "$SIG_SECONDS" "$RESULT_SAVE_MODE" |
       sed "s#<campaign-workspace>#${WORKSPACE_REL_BY_ID[$campaign]}#g; s/^/[dry-run] command: /"
     echo
   done
@@ -738,6 +834,9 @@ command -v python3 >/dev/null 2>&1 || die "python3 is required"
 
 if [ ! -x "${ROOT_DIR}/scripts/run_baseline.sh" ]; then
   die "missing executable dispatcher: scripts/run_baseline.sh"
+fi
+if [ "$RESULT_SAVE_MODE" = "compact" ] && [ ! -f "${ROOT_DIR}/scripts/compact_baseline_results.py" ]; then
+  die "missing compaction helper: scripts/compact_baseline_results.py"
 fi
 
 CONFLICTS=0
@@ -756,9 +855,9 @@ archive_existing_eval_root
 mkdir -p "$CAMPAIGN_ROOT" "$LOG_DIR" "$LAUNCHER_DIR" "$STATUS_DIR"
 
 {
-  printf 'campaign\tbaseline\tversion\tsession_name\tworkspace_root\tworkspace_root_abs\tlog_file\tstatus_file\n'
+  printf 'campaign\tbaseline\tversion\tsession_name\tworkspace_root\tworkspace_root_abs\tlog_file\tstatus_file\tresult_save_mode\n'
   for campaign in "${CAMPAIGN_IDS[@]}"; do
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
       "$campaign" \
       "${BASELINE_BY_ID[$campaign]}" \
       "${VERSION_BY_ID[$campaign]}" \
@@ -766,7 +865,8 @@ mkdir -p "$CAMPAIGN_ROOT" "$LOG_DIR" "$LAUNCHER_DIR" "$STATUS_DIR"
       "${WORKSPACE_REL_BY_ID[$campaign]}" \
       "${WORKSPACE_ABS_BY_ID[$campaign]}" \
       "${LOG_FILE_BY_ID[$campaign]}" \
-      "${STATUS_FILE_BY_ID[$campaign]}"
+      "${STATUS_FILE_BY_ID[$campaign]}" \
+      "$RESULT_SAVE_MODE"
   done
 } > "$INDEX_FILE"
 
@@ -784,7 +884,8 @@ for campaign in "${CAMPAIGN_IDS[@]}"; do
     "${STATUS_FILE_BY_ID[$campaign]}" \
     "$FUZZING_SECONDS" \
     "$KEM_SECONDS" \
-    "$SIG_SECONDS"
+    "$SIG_SECONDS" \
+    "$RESULT_SAVE_MODE"
 
   if tmux new-session -d -s "${SESSION_BY_ID[$campaign]}" -c "$ROOT_DIR" "${LAUNCHER_FILE_BY_ID[$campaign]}"; then
     echo "[eval] started: ${SESSION_BY_ID[$campaign]}"

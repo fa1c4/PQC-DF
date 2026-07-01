@@ -23,6 +23,10 @@ Options:
   --rss-mb N                    RSS limit. Default: 2048.
   --report-formats CSV          Report formats. Default: json,tsv.
   --report-timeout DURATION     Maximum time for finding report generation. Default: 10m.
+  --finding-save-mode grouped|all
+                                Finding artifact retention. Default: grouped.
+  --max-finding-exemplars-per-group N
+                                Replayable exemplars kept per finding group. Default: 1.
   --base-image IMAGE            Docker base image. Default: ubuntu:22.04.
   --dry-run                     Print campaigns and commands without starting tmux.
   -h, --help                    Show this help.
@@ -162,6 +166,8 @@ print_campaign_commands() {
   echo "docker run pqcfuzz-eval: relation_mode: ${RELATION_MODE}"
   echo "docker run pqcfuzz-eval: target_runtime: ${TARGET_RUNTIME}"
   echo "docker run pqcfuzz-eval: sanitizers: ${SANITIZERS}"
+  echo "docker run pqcfuzz-eval: finding_save_mode: ${FINDING_SAVE_MODE}"
+  echo "docker run pqcfuzz-eval: max_finding_exemplars_per_group: ${MAX_FINDING_EXEMPLARS_PER_GROUP}"
   echo "docker run pqcfuzz-eval: build pqcfuzz_kem and pqcfuzz_sig"
   echo "docker run pqcfuzz-eval: run pqcfuzz_kem for ${kem_seconds}s"
   if [ "$version" = "0.14.0" ]; then
@@ -243,7 +249,9 @@ write_launcher() {
     printf 'TARGET_RUNTIME=%q\n' "$TARGET_RUNTIME"
     printf 'SANITIZERS=%q\n' "$SANITIZERS"
     printf 'INPUT_TIMEOUT_SECONDS=%q\n' "$INPUT_TIMEOUT_SECONDS"
-    printf 'RSS_MB=%q\n\n' "$RSS_MB"
+    printf 'RSS_MB=%q\n' "$RSS_MB"
+    printf 'FINDING_SAVE_MODE=%q\n' "$FINDING_SAVE_MODE"
+    printf 'MAX_FINDING_EXEMPLARS_PER_GROUP=%q\n\n' "$MAX_FINDING_EXEMPLARS_PER_GROUP"
     cat <<'EOF'
 if [ "${PQCFUZZ_EVAL_IN_DOCKER:-0}" = "1" ]; then
   WORKSPACE_ROOT_ABS="${ROOT_DIR}/${WORKSPACE_ROOT_REL}"
@@ -1103,6 +1111,8 @@ build_pqcfuzz() {
     -DPQCFUZZ_GENERATED_CONFIG_PATH="\"${tmp_root}/generated_config_kem.json\"" \
     -DPQCFUZZ_ORACLE_SUITE="\"${ORACLE_SUITE}\"" \
     -DPQCFUZZ_RELATION_MODE="\"${RELATION_MODE}\"" \
+    -DPQCFUZZ_FINDING_SAVE_MODE="\"${FINDING_SAVE_MODE}\"" \
+    -DPQCFUZZ_MAX_FINDING_EXEMPLARS_PER_GROUP="${MAX_FINDING_EXEMPLARS_PER_GROUP}" \
     -DPQCFUZZ_LEFT_PROJECT_ID="\"liboqs\"" \
     -DPQCFUZZ_LEFT_IMPLEMENTATION_ID="\"liboqs_mlkem768_wrapper_generic\"" \
     -DPQCFUZZ_RIGHT_PROJECT_ID="\"pqclean\"" \
@@ -1123,6 +1133,8 @@ build_pqcfuzz() {
     -DPQCFUZZ_GENERATED_CONFIG_PATH="\"${tmp_root}/generated_config_sig.json\"" \
     -DPQCFUZZ_ORACLE_SUITE="\"${ORACLE_SUITE}\"" \
     -DPQCFUZZ_RELATION_MODE="\"${RELATION_MODE}\"" \
+    -DPQCFUZZ_FINDING_SAVE_MODE="\"${FINDING_SAVE_MODE}\"" \
+    -DPQCFUZZ_MAX_FINDING_EXEMPLARS_PER_GROUP="${MAX_FINDING_EXEMPLARS_PER_GROUP}" \
     -DPQCFUZZ_LEFT_PROJECT_ID="\"liboqs\"" \
     -DPQCFUZZ_LEFT_IMPLEMENTATION_ID="\"liboqs_mldsa44_wrapper_generic\"" \
     -DPQCFUZZ_RIGHT_PROJECT_ID="\"pqclean\"" \
@@ -1558,6 +1570,8 @@ INPUT_TIMEOUT_SECONDS="30"
 RSS_MB="2048"
 REPORT_FORMATS="json,tsv"
 REPORT_TIMEOUT="10m"
+FINDING_SAVE_MODE="grouped"
+MAX_FINDING_EXEMPLARS_PER_GROUP="1"
 PAIR_ALG="src/config/pair_alg.default.json"
 DRY_RUN=0
 
@@ -1695,6 +1709,28 @@ while [ "$#" -gt 0 ]; do
       REPORT_TIMEOUT="${1#--report-timeout=}"
       shift
       ;;
+    --finding-save-mode)
+      if [ "$#" -lt 2 ]; then
+        die "missing value for --finding-save-mode"
+      fi
+      FINDING_SAVE_MODE="$2"
+      shift 2
+      ;;
+    --finding-save-mode=*)
+      FINDING_SAVE_MODE="${1#--finding-save-mode=}"
+      shift
+      ;;
+    --max-finding-exemplars-per-group)
+      if [ "$#" -lt 2 ]; then
+        die "missing value for --max-finding-exemplars-per-group"
+      fi
+      MAX_FINDING_EXEMPLARS_PER_GROUP="$2"
+      shift 2
+      ;;
+    --max-finding-exemplars-per-group=*)
+      MAX_FINDING_EXEMPLARS_PER_GROUP="${1#--max-finding-exemplars-per-group=}"
+      shift
+      ;;
     --pair-alg)
       if [ "$#" -lt 2 ]; then
         die "missing value for --pair-alg"
@@ -1751,6 +1787,16 @@ if [[ ! "$INPUT_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || [ "$INPUT_TIMEOUT_SECONDS" -l
 fi
 if [[ ! "$RSS_MB" =~ ^[0-9]+$ ]] || [ "$RSS_MB" -le 0 ]; then
   die "--rss-mb must be a positive integer"
+fi
+case "$FINDING_SAVE_MODE" in
+  grouped|all) ;;
+  *) die "--finding-save-mode must be grouped or all" ;;
+esac
+if [[ ! "$MAX_FINDING_EXEMPLARS_PER_GROUP" =~ ^[0-9]+$ ]]; then
+  die "--max-finding-exemplars-per-group must be a non-negative integer"
+fi
+if [ "$FINDING_SAVE_MODE" = "grouped" ] && [ "$MAX_FINDING_EXEMPLARS_PER_GROUP" -le 0 ]; then
+  die "--max-finding-exemplars-per-group must be positive in grouped mode"
 fi
 
 validate_session_prefix "$SESSION_PREFIX"
@@ -1832,6 +1878,8 @@ echo "[pqcfuzz-eval] input timeout: ${INPUT_TIMEOUT_SECONDS}s"
 echo "[pqcfuzz-eval] rss mb: $RSS_MB"
 echo "[pqcfuzz-eval] report formats: $REPORT_FORMATS"
 echo "[pqcfuzz-eval] report timeout: ${REPORT_TIMEOUT_SECONDS}s"
+echo "[pqcfuzz-eval] finding save mode: $FINDING_SAVE_MODE"
+echo "[pqcfuzz-eval] max finding exemplars per group: $MAX_FINDING_EXEMPLARS_PER_GROUP"
 echo "[pqcfuzz-eval] skipped families: SLH-DSA"
 echo "[pqcfuzz-eval] dry run: $DRY_RUN"
 echo

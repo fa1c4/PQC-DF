@@ -1,15 +1,66 @@
 #include "triage/finding_writer.h"
 
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
+#include <map>
+#include <mutex>
 #include <sstream>
 
 namespace pqcfuzz {
 namespace {
 
+#ifndef PQCFUZZ_FINDING_SAVE_MODE
+#define PQCFUZZ_FINDING_SAVE_MODE "grouped"
+#endif
+
+#ifndef PQCFUZZ_MAX_FINDING_EXEMPLARS_PER_GROUP
+#define PQCFUZZ_MAX_FINDING_EXEMPLARS_PER_GROUP 1
+#endif
+
+constexpr uint64_t kCounterFlushInterval = 1024;
+
+struct CounterRecord {
+  std::string result_dir;
+  std::string group_key;
+  std::string finding_id;
+  std::string algorithm;
+  std::string primitive;
+  std::string oracle_suite;
+  std::string relation_mode;
+  std::string oracle_id;
+  std::string field;
+  std::string expected_relation;
+  std::string observed_relation;
+  std::string finding_class;
+  std::string finding_subclass;
+  std::string baseline_status;
+  std::string mutated_status;
+  std::string artifact_dir;
+  std::string replay_command;
+  uint64_t count = 0;
+  uint64_t exemplars = 0;
+};
+
+std::mutex &CounterMutex() {
+  static auto *mutex = new std::mutex();
+  return *mutex;
+}
+
+std::map<std::string, CounterRecord> &CounterRecords() {
+  static auto *records = new std::map<std::string, CounterRecord>();
+  return *records;
+}
+
+bool &ExitFlushRegistered() {
+  static auto *registered = new bool(false);
+  return *registered;
+}
+
 std::string JsonEscape(const std::string &value) {
   std::ostringstream out;
-  for (char ch : value) {
+  for (unsigned char ch : value) {
     switch (ch) {
       case '\\':
         out << "\\\\";
@@ -17,15 +68,74 @@ std::string JsonEscape(const std::string &value) {
       case '"':
         out << "\\\"";
         break;
+      case '\b':
+        out << "\\b";
+        break;
+      case '\f':
+        out << "\\f";
+        break;
       case '\n':
         out << "\\n";
         break;
+      case '\r':
+        out << "\\r";
+        break;
+      case '\t':
+        out << "\\t";
+        break;
       default:
-        out << ch;
+        if (ch < 0x20) {
+          out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned>(ch) << std::dec;
+        } else {
+          out << static_cast<char>(ch);
+        }
         break;
     }
   }
   return out.str();
+}
+
+std::string ShellQuote(const std::string &value) {
+  std::string out = "'";
+  for (char ch : value) {
+    if (ch == '\'') {
+      out += "'\\''";
+    } else {
+      out.push_back(ch);
+    }
+  }
+  out.push_back('\'');
+  return out;
+}
+
+std::string TsvEscape(const std::string &value) {
+  std::string out;
+  out.reserve(value.size());
+  for (char ch : value) {
+    switch (ch) {
+      case '\t':
+      case '\n':
+      case '\r':
+        out.push_back(' ');
+        break;
+      default:
+        out.push_back(ch);
+        break;
+    }
+  }
+  return out;
+}
+
+std::string KeyEscape(const std::string &value) {
+  std::string out;
+  out.reserve(value.size());
+  for (char ch : value) {
+    if (ch == '\\' || ch == '|') {
+      out.push_back('\\');
+    }
+    out.push_back(ch);
+  }
+  return out;
 }
 
 uint64_t Fnv1a(const std::vector<uint8_t> &data) {
@@ -47,6 +157,15 @@ std::string Hex64(uint64_t value) {
   return out;
 }
 
+uint64_t Fnv1aString(const std::string &data) {
+  uint64_t hash = 1469598103934665603ull;
+  for (unsigned char byte : data) {
+    hash ^= byte;
+    hash *= 1099511628211ull;
+  }
+  return hash;
+}
+
 std::string FindingClass(const KEMOracleTrace &trace) {
   for (const auto &finding : trace.findings) {
     if (!finding.finding_class.empty()) {
@@ -65,6 +184,71 @@ std::string FindingSummary(const KEMOracleTrace &trace) {
   return "semantic mismatch requires manual review";
 }
 
+std::string FindingSubclass(const KEMOracleTrace &trace) {
+  if (!trace.finding_subclass.empty()) {
+    return trace.finding_subclass;
+  }
+  for (const auto &finding : trace.findings) {
+    if (!finding.finding_subclass.empty()) {
+      return finding.finding_subclass;
+    }
+  }
+  return "";
+}
+
+std::string Primitive(const FindingArtifactInput &input) {
+  if (!input.primitive.empty()) {
+    return input.primitive;
+  }
+  std::filesystem::path result_path(input.result_dir);
+  std::string last = result_path.filename().string();
+  if (last == "kem" || last == "sig") {
+    return last;
+  }
+  return "";
+}
+
+std::string ReplayCommand(const FindingArtifactInput &input, const std::string &artifact_dir) {
+  return "python3 src/replay/replay_one.py --job workspace/jobs/" + input.job_id + ".json --input " + artifact_dir +
+         "/structured_input.bin --timeout-seconds 30";
+}
+
+std::string Field(const KEMOracleTrace &trace) {
+  return trace.field.empty() ? trace.mutation_target : trace.field;
+}
+
+std::string GroupKey(const FindingArtifactInput &input) {
+  const KEMOracleTrace &trace = input.trace;
+  const std::string finding_class = FindingClass(trace);
+  const std::string finding_subclass = FindingSubclass(trace);
+  const std::string fields[] = {
+      input.algorithm,
+      Primitive(input),
+      trace.oracle_suite,
+      trace.relation_mode,
+      input.oracle_id.empty() ? trace.oracle_id : input.oracle_id,
+      Field(trace),
+      trace.expected_relation,
+      trace.observed_relation,
+      finding_class,
+      finding_subclass,
+      pqcfuzz_status_to_string(trace.baseline.status),
+      pqcfuzz_status_to_string(trace.mutated.status),
+  };
+  std::ostringstream out;
+  for (size_t i = 0; i < sizeof(fields) / sizeof(fields[0]); ++i) {
+    if (i != 0) {
+      out << '|';
+    }
+    out << KeyEscape(fields[i]);
+  }
+  return out.str();
+}
+
+std::string RecordKey(const std::string &result_dir, const std::string &group_key) {
+  return result_dir + "\n" + group_key;
+}
+
 bool WriteText(const std::filesystem::path &path, const std::string &text, std::string *error) {
   std::ofstream out(path);
   if (!out) {
@@ -74,6 +258,29 @@ bool WriteText(const std::filesystem::path &path, const std::string &text, std::
     return false;
   }
   out << text;
+  return true;
+}
+
+bool WriteTextAtomic(const std::filesystem::path &path, const std::string &text, std::string *error) {
+  std::error_code ec;
+  std::filesystem::create_directories(path.parent_path(), ec);
+  if (ec) {
+    if (error != nullptr) {
+      *error = "failed to create " + path.parent_path().string() + ": " + ec.message();
+    }
+    return false;
+  }
+  const std::filesystem::path tmp = path.parent_path() / (path.filename().string() + ".tmp");
+  if (!WriteText(tmp, text, error)) {
+    return false;
+  }
+  std::filesystem::rename(tmp, path, ec);
+  if (ec) {
+    if (error != nullptr) {
+      *error = "failed to rename " + tmp.string() + " to " + path.string() + ": " + ec.message();
+    }
+    return false;
+  }
   return true;
 }
 
@@ -101,13 +308,7 @@ std::string StructuredInputJson(const FindingArtifactInput &input) {
 std::string FindingJson(const FindingArtifactInput &input, const std::string &finding_id, const std::string &artifact_dir) {
   const std::string finding_class = FindingClass(input.trace);
   const std::string summary = FindingSummary(input.trace);
-  std::string finding_subclass;
-  for (const auto &finding : input.trace.findings) {
-    if (!finding.finding_subclass.empty()) {
-      finding_subclass = finding.finding_subclass;
-      break;
-    }
-  }
+  const std::string finding_subclass = FindingSubclass(input.trace);
   std::ostringstream out;
   out << "{\n";
   out << "  \"version\": 1,\n";
@@ -123,9 +324,7 @@ std::string FindingJson(const FindingArtifactInput &input, const std::string &fi
   out << "  \"summary\": \"" << JsonEscape(summary) << "\",\n";
   out << "  \"trace_path\": \"" << JsonEscape(artifact_dir + "/oracle_trace.json") << "\",\n";
   out << "  \"artifact_dir\": \"" << JsonEscape(artifact_dir) << "\",\n";
-  out << "  \"replay_command\": \"python3 src/replay/replay_one.py --job workspace/jobs/"
-      << JsonEscape(input.job_id) << ".json --input " << JsonEscape(artifact_dir)
-      << "/structured_input.bin --timeout-seconds 30\"\n";
+  out << "  \"replay_command\": \"" << JsonEscape(ReplayCommand(input, artifact_dir)) << "\"\n";
   out << "}\n";
   return out.str();
 }
@@ -137,15 +336,15 @@ std::string PocReadme(const FindingArtifactInput &input, const std::string &find
   out << "Pair: `" << input.pair_id << "`\n\n";
   out << "Algorithm: `" << input.algorithm << "`\n\n";
   out << "Oracle: `" << input.oracle_id << "`\n\n";
-  out << "Run `./run.sh` from this directory after copying the repository sources into the container/workspace.\n";
+  out << "Run `./poc/run.sh` from the repository root, or set `PQCFUZZ_REPO_ROOT` to the repository path.\n";
   return out.str();
 }
 
-}  // namespace
-
-bool WriteFindingArtifacts(const FindingArtifactInput &input, std::string *artifact_dir, std::string *error) {
-  const std::string finding_class = FindingClass(input.trace);
-  const std::string finding_id = finding_class + "_" + Hex64(Fnv1a(input.structured_input));
+bool WriteArtifactDirectory(
+    const FindingArtifactInput &input,
+    const std::string &finding_id,
+    std::string *artifact_dir,
+    std::string *error) {
   const std::filesystem::path dir = std::filesystem::path(input.result_dir) / finding_id;
   const std::filesystem::path poc_dir = dir / "poc";
   std::error_code ec;
@@ -201,8 +400,14 @@ bool WriteFindingArtifacts(const FindingArtifactInput &input, std::string *artif
                  "  -o pqcfuzz_replay_oracle\n",
                  error) ||
       !WriteText(poc_dir / "run.sh",
-                 "#!/usr/bin/env bash\nset -euo pipefail\npython3 src/replay/replay_one.py --job workspace/jobs/" +
-                     input.job_id + ".json --input structured_input.bin --timeout-seconds 30\n",
+                 "#!/usr/bin/env bash\nset -euo pipefail\n"
+                 "SCRIPT_DIR=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"\n"
+                 "ARTIFACT_DIR=\"$(cd \"$SCRIPT_DIR/..\" && pwd)\"\n"
+                 "REPO_ROOT=\"${PQCFUZZ_REPO_ROOT:-$(pwd)}\"\n"
+                 "cd \"$REPO_ROOT\"\n"
+                 "python3 src/replay/replay_one.py --job " +
+                     ShellQuote("workspace/jobs/" + input.job_id + ".json") +
+                     " --input \"$ARTIFACT_DIR/structured_input.bin\" --timeout-seconds 30\n",
                  error) ||
       !WriteText(poc_dir / "reproduce.cc", "#include \"replay/replay_oracle.cc\"\n", error)) {
     return false;
@@ -210,6 +415,110 @@ bool WriteFindingArtifacts(const FindingArtifactInput &input, std::string *artif
 
   if (artifact_dir != nullptr) {
     *artifact_dir = dir.string();
+  }
+  return true;
+}
+
+bool FlushFindingCountsForResultDir(const std::string &result_dir, std::string *error) {
+  std::ostringstream out;
+  out << "count\tgroup_key\tfinding_id\talgorithm\tprimitive\toracle_suite\trelation_mode\toracle_id\tfield\t"
+         "expected_relation\tobserved_relation\tfinding_class\tfinding_subclass\tbaseline_status\tmutated_status\t"
+         "exemplar_artifact_path\texemplar_replay_command\n";
+  for (const auto &item : CounterRecords()) {
+    const CounterRecord &record = item.second;
+    if (record.result_dir != result_dir) {
+      continue;
+    }
+    out << record.count << '\t' << TsvEscape(record.group_key) << '\t' << TsvEscape(record.finding_id) << '\t'
+        << TsvEscape(record.algorithm) << '\t' << TsvEscape(record.primitive) << '\t'
+        << TsvEscape(record.oracle_suite) << '\t' << TsvEscape(record.relation_mode) << '\t'
+        << TsvEscape(record.oracle_id) << '\t' << TsvEscape(record.field) << '\t'
+        << TsvEscape(record.expected_relation) << '\t' << TsvEscape(record.observed_relation) << '\t'
+        << TsvEscape(record.finding_class) << '\t' << TsvEscape(record.finding_subclass) << '\t'
+        << TsvEscape(record.baseline_status) << '\t' << TsvEscape(record.mutated_status) << '\t'
+        << TsvEscape(record.artifact_dir) << '\t' << TsvEscape(record.replay_command) << '\n';
+  }
+  return WriteTextAtomic(std::filesystem::path(result_dir) / "finding_counts.tsv", out.str(), error);
+}
+
+void FlushAllFindingCounts() {
+  std::lock_guard<std::mutex> lock(CounterMutex());
+  std::string current;
+  for (const auto &item : CounterRecords()) {
+    const std::string &result_dir = item.second.result_dir;
+    if (result_dir == current) {
+      continue;
+    }
+    FlushFindingCountsForResultDir(result_dir, nullptr);
+    current = result_dir;
+  }
+}
+
+bool SaveModeAll() {
+  return std::string(PQCFUZZ_FINDING_SAVE_MODE) == "all";
+}
+
+uint64_t MaxExemplarsPerGroup() {
+  return PQCFUZZ_MAX_FINDING_EXEMPLARS_PER_GROUP < 0 ? 0 : static_cast<uint64_t>(PQCFUZZ_MAX_FINDING_EXEMPLARS_PER_GROUP);
+}
+
+}  // namespace
+
+bool WriteFindingArtifacts(const FindingArtifactInput &input, std::string *artifact_dir, std::string *error) {
+  const std::string finding_class = FindingClass(input.trace);
+  if (SaveModeAll()) {
+    const std::string finding_id = finding_class + "_" + Hex64(Fnv1a(input.structured_input));
+    return WriteArtifactDirectory(input, finding_id, artifact_dir, error);
+  }
+
+  std::lock_guard<std::mutex> lock(CounterMutex());
+  if (!ExitFlushRegistered()) {
+    std::atexit(FlushAllFindingCounts);
+    ExitFlushRegistered() = true;
+  }
+
+  const std::string group_key = GroupKey(input);
+  const std::string key = RecordKey(input.result_dir, group_key);
+  CounterRecord &record = CounterRecords()[key];
+  if (record.count == 0) {
+    record.result_dir = input.result_dir;
+    record.group_key = group_key;
+    record.algorithm = input.algorithm;
+    record.primitive = Primitive(input);
+    record.oracle_suite = input.trace.oracle_suite;
+    record.relation_mode = input.trace.relation_mode;
+    record.oracle_id = input.oracle_id.empty() ? input.trace.oracle_id : input.oracle_id;
+    record.field = Field(input.trace);
+    record.expected_relation = input.trace.expected_relation;
+    record.observed_relation = input.trace.observed_relation;
+    record.finding_class = finding_class;
+    record.finding_subclass = FindingSubclass(input.trace);
+    record.baseline_status = pqcfuzz_status_to_string(input.trace.baseline.status);
+    record.mutated_status = pqcfuzz_status_to_string(input.trace.mutated.status);
+    record.finding_id = finding_class + "_" + Hex64(Fnv1aString(group_key));
+    record.artifact_dir = (std::filesystem::path(input.result_dir) / record.finding_id).string();
+    record.replay_command = ReplayCommand(input, record.artifact_dir);
+  }
+
+  record.count += 1;
+  const bool should_write_exemplar = record.exemplars < MaxExemplarsPerGroup();
+  if (should_write_exemplar) {
+    std::string exemplar_id = record.finding_id;
+    if (record.exemplars > 0) {
+      exemplar_id += "_" + Hex64(Fnv1a(input.structured_input));
+    }
+    if (!WriteArtifactDirectory(input, exemplar_id, artifact_dir, error)) {
+      return false;
+    }
+    record.exemplars += 1;
+  } else if (artifact_dir != nullptr) {
+    *artifact_dir = record.artifact_dir;
+  }
+
+  if (record.count == 1 || record.count % kCounterFlushInterval == 0) {
+    if (!FlushFindingCountsForResultDir(input.result_dir, error)) {
+      return false;
+    }
   }
   return true;
 }

@@ -134,6 +134,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
     artifacts.job_id = PQCFUZZ_JOB_ID;
     artifacts.pair_id = PQCFUZZ_PAIR_ID;
     artifacts.algorithm = algorithm;
+    artifacts.primitive = "kem";
     artifacts.oracle_id = trace.oracle_id;
     artifacts.result_dir = PQCFUZZ_RESULT_DIR;
     artifacts.generated_config_json = ReadConfigText();

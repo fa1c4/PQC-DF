@@ -155,3 +155,119 @@ def test_fast_summary_counts_artifact_dirs_and_reads_exemplars(tmp_path: Path) -
     assert summaries[0]["group_key"] == "0.8.0|kem|confirmed_semantic_bug"
     assert summaries[0]["finding_class"] == "confirmed_semantic_bug"
     assert summaries[0]["oracle_id"] == "kem_decaps_c"
+
+
+def test_fast_summary_prefers_grouped_counter_counts(tmp_path: Path) -> None:
+    eval_root = tmp_path / "pqcfuzz_eval"
+    finding_path = write_finding(
+        eval_root,
+        finding_id="malleability_0123456789abcdef",
+        oracle_id="kem_keygen_badrng",
+    )
+    artifact = finding_path.parent
+    counter = artifact.parent / "finding_counts.tsv"
+    counter.write_text(
+        "\t".join(
+            [
+                "count",
+                "group_key",
+                "finding_id",
+                "finding_class",
+                "finding_subclass",
+                "exemplar_artifact_path",
+                "exemplar_replay_command",
+            ]
+        )
+        + "\n"
+        + "\t".join(
+            [
+                "42",
+                "ML-KEM-768|kem|metamorphic|single-target|kem_keygen_badrng|rng|EXPECT_DIFFERENT|OBSERVED_EQUAL|malleability|encaps_rng_ignored|OK|OK",
+                artifact.name,
+                "malleability",
+                "encaps_rng_ignored",
+                str(artifact),
+                f"python3 src/replay/replay_one.py --input {artifact / 'structured_input.bin'}",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "report"
+
+    write_reports([eval_root], output, {"tsv"}, trace_mode="exemplar", findings_mode="fast-summary")
+
+    summaries = read_tsv(output / "findings_summary.tsv")
+    assert len(summaries) == 1
+    assert summaries[0]["count"] == "42"
+    assert summaries[0]["summary_mode"] == "grouped-counter"
+    assert summaries[0]["oracle_id"] == "kem_keygen_badrng"
+
+
+def test_fast_summary_uses_counter_fields_when_exemplar_is_missing(tmp_path: Path) -> None:
+    eval_root = tmp_path / "pqcfuzz_eval"
+    result_dir = eval_root / "campaigns" / "liboqs-0.14.0" / "workspace" / "results" / "kem"
+    result_dir.mkdir(parents=True)
+    missing_artifact = result_dir / "malleability_missing"
+    counter = result_dir / "finding_counts.tsv"
+    counter.write_text(
+        "\t".join(
+            [
+                "count",
+                "group_key",
+                "finding_id",
+                "algorithm",
+                "primitive",
+                "oracle_suite",
+                "relation_mode",
+                "oracle_id",
+                "field",
+                "expected_relation",
+                "observed_relation",
+                "finding_class",
+                "finding_subclass",
+                "baseline_status",
+                "mutated_status",
+                "exemplar_artifact_path",
+                "exemplar_replay_command",
+            ]
+        )
+        + "\n"
+        + "\t".join(
+            [
+                "17",
+                "ML-KEM-768|kem|metamorphic|single-target|kem_decaps_c|ciphertext|EXPECT_DIFFERENT|OBSERVED_EQUAL|malleability|ciphertext_malleability|OK|OK",
+                "malleability_missing",
+                "ML-KEM-768",
+                "kem",
+                "metamorphic",
+                "single-target",
+                "kem_decaps_c",
+                "ciphertext",
+                "EXPECT_DIFFERENT",
+                "OBSERVED_EQUAL",
+                "malleability",
+                "ciphertext_malleability",
+                "OK",
+                "OK",
+                str(missing_artifact),
+                "python3 src/replay/replay_one.py --input missing.bin",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "report"
+
+    write_reports([eval_root], output, {"tsv"}, trace_mode="exemplar", findings_mode="fast-summary")
+
+    summaries = read_tsv(output / "findings_summary.tsv")
+    assert len(summaries) == 1
+    assert summaries[0]["count"] == "17"
+    assert summaries[0]["summary_mode"] == "grouped-counter"
+    assert summaries[0]["version"] == "0.14.0"
+    assert summaries[0]["algorithm"] == "ML-KEM-768"
+    assert summaries[0]["oracle_id"] == "kem_decaps_c"
+    assert summaries[0]["field"] == "ciphertext"
+    assert summaries[0]["baseline_status"] == "OK"
+    assert summaries[0]["exemplar_artifact_path"] == str(missing_artifact)
